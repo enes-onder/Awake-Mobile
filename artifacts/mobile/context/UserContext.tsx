@@ -1,0 +1,371 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { Session, User } from "@supabase/supabase-js";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
+import { supabase } from "@/lib/supabase";
+
+export type RankName =
+  | "Çaylak"
+  | "Araştırmacı"
+  | "Analist"
+  | "Kıdemli Analist"
+  | "Baş Dedektif";
+
+export interface Rank {
+  name: RankName;
+  minXP: number;
+  maxXP: number;
+  color: string;
+  icon: string;
+}
+
+export const RANKS: Rank[] = [
+  { name: "Çaylak", minXP: 0, maxXP: 149, color: "#8892A4", icon: "user" },
+  { name: "Araştırmacı", minXP: 150, maxXP: 399, color: "#00C851", icon: "search" },
+  { name: "Analist", minXP: 400, maxXP: 799, color: "#2B7FFF", icon: "bar-chart-2" },
+  { name: "Kıdemli Analist", minXP: 800, maxXP: 1499, color: "#9B59B6", icon: "award" },
+  { name: "Baş Dedektif", minXP: 1500, maxXP: 9999, color: "#FF9500", icon: "shield" },
+];
+
+export interface BadgeData {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  earned: boolean;
+}
+
+export const ALL_BADGES: BadgeData[] = [
+  { id: "first_case", name: "İlk Vaka", description: "İlk vakanı çözdün", icon: "star", color: "#FFD700", earned: false },
+  { id: "streak_3", name: "Ateş Hattı", description: "3 gün üst üste oynadın", icon: "zap", color: "#FF6B35", earned: false },
+  { id: "streak_7", name: "Haftalık Seri", description: "7 gün üst üste oynadın", icon: "trending-up", color: "#FF3B30", earned: false },
+  { id: "lab_master", name: "Lab Ustası", description: "10 vaka tamamladın", icon: "award", color: "#2B7FFF", earned: false },
+  { id: "truth_seeker", name: "Gerçek Avcısı", description: "5 sahte haberi tespit ettin", icon: "eye", color: "#9B59B6", earned: false },
+  { id: "analyst", name: "Analist Rozeti", description: "Analist rütbesine ulaştın", icon: "bar-chart-2", color: "#00C851", earned: false },
+  { id: "accuracy_90", name: "Keskin Nişancı", description: "%90 doğruluk oranına ulaştın", icon: "crosshair", color: "#FF3B30", earned: false },
+  { id: "lesson_3", name: "Öğrenci", description: "3 ders tamamladın", icon: "book-open", color: "#00D4FF", earned: false },
+];
+
+interface UserState {
+  username: string;
+  bio: string;
+  favoriteTopic: string;
+  usernameLastChanged: string | null;
+  xp: number;
+  completedMissions: string[];
+  completedLessons: string[];
+  correctAnswers: number;
+  totalAnswers: number;
+  fakesDetected: number;
+  badges: string[];
+  streak: number;
+  lastPlayDate: string | null;
+}
+
+interface UserContextType extends UserState {
+  rank: Rank;
+  nextRank: Rank | null;
+  xpProgress: number;
+  accuracyRate: number;
+  dailyPlayedToday: boolean;
+  dailyXPMultiplier: number;
+  earnXP: (amount: number) => void;
+  completeMission: (missionId: string, correct: boolean) => void;
+  completeLesson: (lessonId: string) => void;
+  earnBadge: (badgeId: string) => void;
+  setUsername: (name: string) => void;
+  updateProfile: (fields: { bio?: string; favoriteTopic?: string }) => void;
+  canChangeUsername: () => boolean;
+  daysUntilUsernameChange: () => number;
+  isLoading: boolean;
+  getBadges: () => BadgeData[];
+  authUser: User | null;
+  session: Session | null;
+  isAnonymous: boolean;
+  signOut: () => Promise<void>;
+  signInAnonymously: () => Promise<{ error: string | null }>;
+}
+
+const defaultState: UserState = {
+  username: "",
+  bio: "",
+  favoriteTopic: "",
+  usernameLastChanged: null,
+  xp: 0,
+  completedMissions: [],
+  completedLessons: [],
+  correctAnswers: 0,
+  totalAnswers: 0,
+  fakesDetected: 0,
+  badges: [],
+  streak: 0,
+  lastPlayDate: null,
+};
+
+const STORAGE_KEY = "@dogruluk_user_v2";
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+function todayStr() {
+  return new Date().toDateString();
+}
+
+function calcStreak(lastPlayDate: string | null, currentStreak: number): { streak: number; lastPlayDate: string } {
+  const today = todayStr();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (lastPlayDate === today) {
+    return { streak: currentStreak, lastPlayDate: today };
+  } else if (lastPlayDate === yesterday) {
+    return { streak: currentStreak + 1, lastPlayDate: today };
+  } else {
+    return { streak: 1, lastPlayDate: today };
+  }
+}
+
+export function UserProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<UserState>(defaultState);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      try {
+        const [storedRaw, { data: sessionData }] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEY),
+          supabase.auth.getSession(),
+        ]);
+
+        if (!mounted) return;
+
+        if (storedRaw) {
+          const parsed = JSON.parse(storedRaw);
+          setState({ ...defaultState, ...parsed });
+        }
+
+        if (sessionData.session) {
+          setSession(sessionData.session);
+          setAuthUser(sessionData.session.user);
+        }
+      } catch {
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!mounted) return;
+      setSession(newSession);
+      setAuthUser(newSession?.user ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const save = useCallback(async (next: UserState) => {
+    setState(next);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    setState(defaultState);
+  }, []);
+
+  const signInAnonymously = useCallback(async (): Promise<{ error: string | null }> => {
+    try {
+      const { error } = await supabase.auth.signInAnonymously();
+      return { error: error?.message ?? null };
+    } catch (e: unknown) {
+      return { error: e instanceof Error ? e.message : "Misafir girişi başarısız" };
+    }
+  }, []);
+
+  const getRank = (xp: number): Rank => {
+    for (let i = RANKS.length - 1; i >= 0; i--) {
+      if (xp >= RANKS[i].minXP) return RANKS[i];
+    }
+    return RANKS[0];
+  };
+
+  const isAnonymous = authUser?.is_anonymous ?? false;
+
+  const rank = getRank(state.xp);
+  const rankIdx = RANKS.indexOf(rank);
+  const nextRank = rankIdx < RANKS.length - 1 ? RANKS[rankIdx + 1] : null;
+  const xpInRange = state.xp - rank.minXP;
+  const rangeSize = rank.maxXP - rank.minXP + 1;
+  const xpProgress = Math.min(xpInRange / rangeSize, 1);
+  const accuracyRate =
+    state.totalAnswers > 0
+      ? Math.round((state.correctAnswers / state.totalAnswers) * 100)
+      : 0;
+  const dailyPlayedToday = state.lastPlayDate === todayStr();
+  const dailyXPMultiplier = dailyPlayedToday ? 1 : 2;
+
+  const earnXP = useCallback(
+    (amount: number) => {
+      save({ ...state, xp: Math.max(0, state.xp + amount) });
+    },
+    [state, save]
+  );
+
+  const completeMission = useCallback(
+    (missionId: string, correct: boolean) => {
+      const alreadyDone = state.completedMissions.includes(missionId);
+      const newCompleted = alreadyDone
+        ? state.completedMissions
+        : [...state.completedMissions, missionId];
+      const newCorrect = correct ? state.correctAnswers + 1 : state.correctAnswers;
+      const newTotal = state.totalAnswers + 1;
+      const newFakes = correct && !alreadyDone
+        ? state.fakesDetected + 1
+        : state.fakesDetected;
+      const newBadges = [...state.badges];
+
+      if (!alreadyDone && newCompleted.length === 1 && !newBadges.includes("first_case")) {
+        newBadges.push("first_case");
+      }
+      if (!alreadyDone && newCompleted.length >= 10 && !newBadges.includes("lab_master")) {
+        newBadges.push("lab_master");
+      }
+      if (accuracyRate >= 90 && newTotal >= 5 && !newBadges.includes("accuracy_90")) {
+        newBadges.push("accuracy_90");
+      }
+      if (newFakes >= 5 && !newBadges.includes("truth_seeker")) {
+        newBadges.push("truth_seeker");
+      }
+
+      const { streak, lastPlayDate } = calcStreak(state.lastPlayDate, state.streak);
+      if (streak >= 3 && !newBadges.includes("streak_3")) newBadges.push("streak_3");
+      if (streak >= 7 && !newBadges.includes("streak_7")) newBadges.push("streak_7");
+
+      if (rank.name === "Analist" && !newBadges.includes("analyst")) {
+        newBadges.push("analyst");
+      }
+
+      save({
+        ...state,
+        completedMissions: newCompleted,
+        correctAnswers: newCorrect,
+        totalAnswers: newTotal,
+        fakesDetected: newFakes,
+        badges: newBadges,
+        streak,
+        lastPlayDate,
+      });
+    },
+    [state, save, accuracyRate, rank]
+  );
+
+  const completeLesson = useCallback(
+    (lessonId: string) => {
+      if (state.completedLessons.includes(lessonId)) return;
+      const newLessons = [...state.completedLessons, lessonId];
+      const newBadges = [...state.badges];
+      if (newLessons.length >= 3 && !newBadges.includes("lesson_3")) {
+        newBadges.push("lesson_3");
+      }
+      const { streak, lastPlayDate } = calcStreak(state.lastPlayDate, state.streak);
+      save({ ...state, completedLessons: newLessons, badges: newBadges, streak, lastPlayDate });
+    },
+    [state, save]
+  );
+
+  const earnBadge = useCallback(
+    (badgeId: string) => {
+      if (!state.badges.includes(badgeId)) {
+        save({ ...state, badges: [...state.badges, badgeId] });
+      }
+    },
+    [state, save]
+  );
+
+  const canChangeUsername = useCallback(() => {
+    if (!state.usernameLastChanged) return true;
+    const last = new Date(state.usernameLastChanged);
+    const now = new Date();
+    const diffDays = (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays >= 30;
+  }, [state.usernameLastChanged]);
+
+  const daysUntilUsernameChange = useCallback(() => {
+    if (!state.usernameLastChanged) return 0;
+    const last = new Date(state.usernameLastChanged);
+    const now = new Date();
+    const diffDays = (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24);
+    return Math.max(0, Math.ceil(30 - diffDays));
+  }, [state.usernameLastChanged]);
+
+  const setUsername = useCallback(
+    (name: string) => {
+      save({ ...state, username: name, usernameLastChanged: new Date().toISOString() });
+    },
+    [state, save]
+  );
+
+  const updateProfile = useCallback(
+    (fields: { bio?: string; favoriteTopic?: string }) => {
+      save({ ...state, ...fields });
+    },
+    [state, save]
+  );
+
+  const getBadges = useCallback((): BadgeData[] => {
+    return ALL_BADGES.map((b) => ({ ...b, earned: state.badges.includes(b.id) }));
+  }, [state.badges]);
+
+  return (
+    <UserContext.Provider
+      value={{
+        ...state,
+        rank,
+        nextRank,
+        xpProgress,
+        accuracyRate,
+        dailyPlayedToday,
+        dailyXPMultiplier,
+        earnXP,
+        completeMission,
+        completeLesson,
+        earnBadge,
+        setUsername,
+        updateProfile,
+        canChangeUsername,
+        daysUntilUsernameChange,
+        isLoading,
+        getBadges,
+        authUser,
+        session,
+        isAnonymous,
+        signOut,
+        signInAnonymously,
+      }}
+    >
+      {children}
+    </UserContext.Provider>
+  );
+}
+
+export function useUser(): UserContextType {
+  const ctx = useContext(UserContext);
+  if (!ctx) throw new Error("useUser must be used inside UserProvider");
+  return ctx;
+}

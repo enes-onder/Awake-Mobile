@@ -1,0 +1,268 @@
+# 🔍 Doğruluk Dedektifi
+
+> Dezenformasyona karşı silahlan. Sahte haberleri tespit etmeyi öğreten Türkçe mobil oyun.
+
+Doğruluk Dedektifi; kullanıcıların sosyal medya paylaşımlarını analiz ettiği, senaryo simülasyonları oynadığı ve dezenformasyon farkındalığı kazandığı eğitici bir mobil oyundur. Expo (React Native) ile geliştirilmiş olup Android, iOS ve web tarayıcısında çalışır.
+
+---
+
+## 📱 Özellikler
+
+- **Haber Lab** — Gerçek/sahte karar verme (swipe kartlar) + ipucu sistemi
+- **Simülasyon** — Adım adım gerçek hayat senaryoları (WhatsApp mesajı, sahte alıntı, kriz anı)
+- **Akademi** — 6 ders + quiz'ler; sıralı kilit sistemi
+- **Profil** — XP sistemi, 5 rütbe kademesi, 8 rozet, günlük seri takibi
+- **Supabase Auth** — E-posta/şifre, magic link, anonim (misafir) giriş
+- **Offline Mod** — Supabase'e bağlanamazsan yerel yedek veri devreye girer
+- Karanlık tema, haptic geri bildirim, responsive tasarım (telefon + tablet)
+
+---
+
+## 📚 Belgeler
+
+| Konu | Dosya |
+|---|---|
+| Giriş yöntemleri, auth akışı, OAuth kurulumu | [`docs/AUTH.md`](docs/AUTH.md) |
+| Responsive tasarım, `useResponsive` hook | [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md) |
+| XP, rütbe, rozet, streak sistemi | [`docs/GAME_MECHANICS.md`](docs/GAME_MECHANICS.md) |
+| Supabase şeması, tablolar, RLS, seed data | [`docs/DATABASE.md`](docs/DATABASE.md) |
+| Her ekranın detaylı açıklaması | [`docs/SCREENS.md`](docs/SCREENS.md) |
+| Her bileşenin props ve davranış açıklaması | [`docs/COMPONENTS.md`](docs/COMPONENTS.md) |
+| UserContext ve ContentContext detayları | [`docs/CONTEXTS.md`](docs/CONTEXTS.md) |
+| Kod tabanı haritası (klasör/dosya açıklamaları) | [`CODEBASE.md`](CODEBASE.md) |
+
+---
+
+## 🗂️ Proje Yapısı
+
+```
+dogruluk-dedektifi/
+├── artifacts/
+│   ├── mobile/              ← Ana uygulama (Expo / React Native)
+│   │   ├── app/             ← Expo Router ekranları
+│   │   ├── components/      ← Yeniden kullanılabilir UI parçaları
+│   │   ├── context/         ← UserContext, ContentContext
+│   │   ├── data/            ← Offline yedek içerik (vakalar, dersler, simülasyonlar)
+│   │   ├── hooks/           ← useResponsive, useColors
+│   │   ├── constants/       ← Renk paleti
+│   │   └── lib/             ← Supabase istemcisi
+│   │
+│   └── api-server/          ← Express.js REST API (altyapı hazır)
+│
+├── lib/                     ← Paylaşılan kütüphaneler (Drizzle, Zod, React Query)
+├── supabase/                ← schema_and_seed.sql
+├── docs/                    ← Özellik belgelemeleri
+└── package.json
+```
+
+---
+
+## ⚙️ Gereksinimler
+
+| Yazılım | Minimum | İndirme |
+|---|---|---|
+| **Node.js** | v20+ | https://nodejs.org |
+| **pnpm** | v9+ | `npm install -g pnpm` |
+
+> ⚠️ Bu proje **yalnızca pnpm** destekler. `npm install` veya `yarn` çalışmaz.
+
+**Mobil test için (isteğe bağlı):**
+
+| Hedef | Gerekli |
+|---|---|
+| Android | [Android Studio](https://developer.android.com/studio) |
+| iPhone (fiziksel) | [Expo Go](https://expo.dev/go) (App Store'dan ücretsiz) |
+| iPhone simülatör | macOS + Xcode |
+| Web | Sadece Chrome/Firefox yeterli |
+
+---
+
+## 🚀 Kurulum
+
+### 1. Repoyu İndir
+
+```bash
+git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
+cd dogruluk-dedektifi
+```
+
+### 2. Bağımlılıkları Yükle
+
+```bash
+pnpm install
+```
+
+### 3. Ortam Değişkenlerini Ayarla
+
+`artifacts/mobile/` içinde `.env` dosyası oluştur:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://PROJE_ID.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhb...uzun_anahtar_buraya
+```
+
+> Anahtarları [supabase.com](https://supabase.com) → Projen → **Settings → API** bölümünden alabilirsin.
+
+### 4. Supabase Veritabanını Kur (İlk Kez)
+
+Supabase dashboard → **SQL Editor** → `supabase/schema_and_seed.sql` dosyasını yapıştır → **Run**
+
+Detaylı bilgi için → [`docs/DATABASE.md`](docs/DATABASE.md)
+
+### 5. Uygulamayı Başlat
+
+```bash
+pnpm --filter @workspace/mobile run dev
+```
+
+Expo QR kodu çıkınca:
+
+| Platform | Ne Yapacaksın |
+|---|---|
+| Web | `w` tuşuna bas veya `localhost:PORT` aç |
+| Android telefon | Expo Go'yu kur, QR kodu tara |
+| iPhone | Kamerayı QR koda tut → linke tıkla |
+| Android emülatör | `a` tuşuna bas |
+| iOS simülatör | `i` tuşuna bas (Mac + Xcode gerekli) |
+
+---
+
+## 🖥️ İşletim Sistemine Göre Kurulum
+
+### Windows
+
+```powershell
+# Node.js: https://nodejs.org → LTS indir → .msi kur
+npm install -g pnpm
+node --version   # v20+ olmalı
+pnpm --version   # v9+ olmalı
+
+git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
+cd dogruluk-dedektifi && pnpm install
+pnpm --filter @workspace/mobile run dev
+```
+
+**Android emülatörü (Windows):**
+1. Android Studio indir + kur
+2. `ANDROID_HOME` ortam değişkeni: `C:\Users\SEN\AppData\Local\Android\Sdk`
+3. Expo çalışırken `a` bas
+
+### Linux (Ubuntu / Debian)
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc && nvm install 24
+npm install -g pnpm
+sudo apt-get install git -y
+
+git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
+cd dogruluk-dedektifi && pnpm install
+pnpm --filter @workspace/mobile run dev
+```
+
+### macOS
+
+```bash
+brew install node@24
+npm install -g pnpm
+
+git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
+cd dogruluk-dedektifi && pnpm install
+pnpm --filter @workspace/mobile run dev
+```
+
+iOS simülatörü için: Mac App Store'dan **Xcode**'u kur, bir kez aç, Expo çalışırken `i` bas.
+
+---
+
+## 🔧 Ortam Değişkenleri
+
+| Dosya | Değişken | Açıklama |
+|---|---|---|
+| `artifacts/mobile/.env` | `EXPO_PUBLIC_SUPABASE_URL` | Supabase proje URL'i |
+| `artifacts/mobile/.env` | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonim anahtar |
+| `artifacts/api-server/.env` | `DATABASE_URL` | PostgreSQL bağlantı dizesi |
+| `artifacts/api-server/.env` | `PORT` | API sunucu portu (varsayılan: 8080) |
+
+---
+
+## 📦 Kullanılan Teknolojiler
+
+### Mobil Uygulama
+
+| Paket | Açıklama |
+|---|---|
+| `expo` ~54 | Mobil uygulama çerçevesi |
+| `expo-router` ~6 | Dosya adına göre navigasyon |
+| `react-native` 0.81.5 | Telefon/tablet UI katmanı |
+| `react-native-reanimated` ~4.1 | Akıcı animasyonlar |
+| `react-native-gesture-handler` ~2.28 | Swipe hareketleri |
+| `@supabase/supabase-js` | Auth + veritabanı bağlantısı |
+| `@react-native-async-storage/async-storage` | Cihaza yerel veri kaydetme |
+| `@expo/vector-icons` | Feather ikon seti |
+| `@expo-google-fonts/inter` | Inter yazı tipi |
+| `expo-haptics` | Dokunmatik titreşim |
+| `expo-glass-effect` | iOS 26+ LiquidGlass sekme çubuğu |
+
+### API Sunucusu
+
+| Paket | Açıklama |
+|---|---|
+| `express` ^5 | HTTP sunucu çerçevesi |
+| `pino` | Hızlı JSON loglama |
+| `zod` | Tip güvenli şema doğrulama |
+| `drizzle-orm` | TypeScript ORM |
+
+---
+
+## 🗺️ Yol Haritası
+
+- [x] Supabase Auth — e-posta, magic link, anonim giriş
+- [ ] Google / Apple OAuth (Supabase'de provider yapılandırması gerekiyor)
+- [ ] Bulut tabanlı oyun verisi senkronizasyonu (AsyncStorage → Supabase)
+- [ ] Günlük haber API entegrasyonu (teyit.org vb.)
+- [ ] Çok oyunculu sıralama tablosu
+- [ ] Push bildirim sistemi
+- [ ] App Store / Google Play yayını
+- [ ] AI destekli yeni vaka üretimi
+
+---
+
+## ❓ Sık Karşılaşılan Sorunlar
+
+**`pnpm install` hata veriyor:**
+- `node --version` → v20+ olmalı
+- `npm install -g pnpm` ile yeniden kur
+
+**Expo başlıyor ama telefonda açılmıyor:**
+- Telefon ve bilgisayar aynı Wi-Fi ağında olmalı
+- Expo Go'nun güncel olduğundan emin ol
+
+**Supabase bağlantısı çalışmıyor:**
+- `.env` dosyasının `artifacts/mobile/` içinde olduğunu kontrol et
+- Anahtarların başında/sonunda boşluk olmadığından emin ol
+- Bağlanamazsa uygulama yerel verilerle çalışmaya devam eder
+
+**Giriş ekranı çalışmıyor:**
+- Supabase projesinde "Anonymous sign-ins" etkin olmalı: Dashboard → Auth → Settings → Enable anonymous sign-ins
+- Detaylı auth sorun giderme → [`docs/AUTH.md`](docs/AUTH.md)
+
+**`npm install` veya `yarn` hata veriyor:**
+- Bu proje sadece `pnpm` destekler: `pnpm install` kullan
+
+---
+
+## 🤝 Katkı
+
+```bash
+git checkout -b feature/yeni-ozellik
+git commit -m "feat: yeni özellik eklendi"
+git push origin feature/yeni-ozellik
+# Pull Request aç
+```
+
+---
+
+## 📄 Lisans
+
+MIT © 2026 — Doğruluk Dedektifi
