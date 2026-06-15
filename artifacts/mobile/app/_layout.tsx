@@ -7,7 +7,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Linking from "expo-linking";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -32,8 +32,10 @@ function NavController() {
   const { isLoading, username, authUser, isAnonymous } = useUser();
   const router = useRouter();
   const segments = useSegments();
+  const navigationState = useRootNavigationState();
 
   useEffect(() => {
+    if (!navigationState?.key) return;
     if (isLoading) return;
     const inOnboarding = segments[0] === "onboarding";
 
@@ -42,10 +44,9 @@ function NavController() {
     } else if (!username) {
       if (!inOnboarding) router.replace("/onboarding");
     } else {
-      // Anonymous users with a username can visit onboarding to link their account
       if (inOnboarding && !isAnonymous) router.replace("/(tabs)");
     }
-  }, [isLoading, username, authUser, isAnonymous]);
+  }, [navigationState?.key, isLoading, username, authUser, isAnonymous]);
 
   return null;
 }
