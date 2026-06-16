@@ -6,7 +6,6 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import * as Linking from "expo-linking";
 import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
@@ -17,7 +16,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ContentProvider } from "@/context/ContentContext";
 import { UserProvider, useUser } from "@/context/UserContext";
-import { supabase } from "@/lib/supabase";
 
 function ContentProviderWithXP({ children }: { children: React.ReactNode }) {
   const { xp } = useUser();
@@ -29,7 +27,7 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function NavController() {
-  const { isLoading, username, authUser, isAnonymous } = useUser();
+  const { isLoading, username } = useUser();
   const router = useRouter();
   const segments = useSegments();
   const navigationState = useRootNavigationState();
@@ -39,36 +37,12 @@ function NavController() {
     if (isLoading) return;
     const inOnboarding = segments[0] === "onboarding";
 
-    if (!authUser) {
-      if (!inOnboarding) router.replace("/onboarding");
-    } else if (!username) {
+    if (!username) {
       if (!inOnboarding) router.replace("/onboarding");
     } else {
-      if (inOnboarding && !isAnonymous) router.replace("/(tabs)");
+      if (inOnboarding) router.replace("/(tabs)");
     }
-  }, [navigationState?.key, isLoading, username, authUser, isAnonymous]);
-
-  return null;
-}
-
-function DeepLinkHandler() {
-  useEffect(() => {
-    const handleUrl = async (url: string) => {
-      if (url.includes("access_token") || url.includes("code=")) {
-        await supabase.auth.exchangeCodeForSession(url);
-      }
-    };
-
-    const subscription = Linking.addEventListener("url", ({ url }) => {
-      handleUrl(url);
-    });
-
-    Linking.getInitialURL().then((url) => {
-      if (url) handleUrl(url);
-    });
-
-    return () => subscription.remove();
-  }, []);
+  }, [navigationState?.key, isLoading, username]);
 
   return null;
 }
@@ -107,7 +81,6 @@ export default function RootLayout() {
             <KeyboardProvider>
               <UserProvider>
                 <ContentProviderWithXP>
-                  <DeepLinkHandler />
                   <NavController />
                   <RootLayoutNav />
                 </ContentProviderWithXP>

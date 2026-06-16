@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { LESSONS, type Lesson } from "@/data/lessons";
 import { MISSIONS, type Mission } from "@/data/missions";
 import { SIMULATIONS, type Simulation } from "@/data/simulations";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 
 interface ContentState {
   missions: Mission[];
@@ -34,7 +34,7 @@ function mapMission(row: Record<string, unknown>): Mission {
     description: row.description as string,
     difficulty: row.difficulty as 1 | 2 | 3,
     type: row.type as Mission["type"],
-    xpReward: row.xp_reward as number,
+    xpReward: (row.xp_reward ?? row.xpReward) as number,
     category: row.category as string,
     verdict: row.verdict as "real" | "fake",
     content: row.content as Mission["content"],
@@ -51,7 +51,7 @@ function mapLesson(row: Record<string, unknown>): Lesson {
     duration: row.duration as string,
     icon: row.icon as string,
     color: row.color as string,
-    xpReward: row.xp_reward as number,
+    xpReward: (row.xp_reward ?? row.xpReward) as number,
     content: row.content as string[],
     quiz: row.quiz as Lesson["quiz"],
   };
@@ -63,7 +63,7 @@ function mapSimulation(row: Record<string, unknown>): Simulation {
     title: row.title as string,
     description: row.description as string,
     difficulty: row.difficulty as 1 | 2 | 3,
-    xpReward: row.xp_reward as number,
+    xpReward: (row.xp_reward ?? row.xpReward) as number,
     category: row.category as string,
     steps: row.steps as Simulation["steps"],
   };
@@ -93,42 +93,26 @@ export function ContentProvider({
       setError(null);
 
       try {
-        const [missionsRes, lessonsRes, simsRes] = await Promise.all([
-          supabase
-            .from("missions")
-            .select("*")
-            .eq("is_active", true)
-            .order("order_index"),
-          supabase
-            .from("lessons")
-            .select("*")
-            .eq("is_active", true)
-            .order("order_index"),
-          supabase
-            .from("simulations")
-            .select("*")
-            .eq("is_active", true)
-            .order("order_index"),
+        const [missionsData, lessonsData, simsData] = await Promise.all([
+          api.getMissions(),
+          api.getLessons(),
+          api.getSimulations(),
         ]);
 
         if (cancelled) return;
 
-        if (missionsRes.error) throw missionsRes.error;
-        if (lessonsRes.error) throw lessonsRes.error;
-        if (simsRes.error) throw simsRes.error;
+        const fetchedMissions = missionsData.map((r) => mapMission(r as Record<string, unknown>));
+        const fetchedLessons = lessonsData.map((r) => mapLesson(r as Record<string, unknown>));
+        const fetchedSims = simsData.map((r) => mapSimulation(r as Record<string, unknown>));
 
-        const fetchedMissions = (missionsRes.data ?? []).map(mapMission);
-        const fetchedLessons = (lessonsRes.data ?? []).map(mapLesson);
-        const fetchedSims = (simsRes.data ?? []).map(mapSimulation);
-
-        const lockedM = (missionsRes.data ?? [])
-          .filter((r) => (r.required_xp as number) > userXP)
+        const lockedM = (missionsData as Record<string, unknown>[])
+          .filter((r) => ((r.required_xp ?? r.requiredXp) as number) > userXP)
           .map((r) => r.id as string);
-        const lockedL = (lessonsRes.data ?? [])
-          .filter((r) => (r.required_xp as number) > userXP)
+        const lockedL = (lessonsData as Record<string, unknown>[])
+          .filter((r) => ((r.required_xp ?? r.requiredXp) as number) > userXP)
           .map((r) => r.id as string);
-        const lockedS = (simsRes.data ?? [])
-          .filter((r) => (r.required_xp as number) > userXP)
+        const lockedS = (simsData as Record<string, unknown>[])
+          .filter((r) => ((r.required_xp ?? r.requiredXp) as number) > userXP)
           .map((r) => r.id as string);
 
         setMissions(fetchedMissions.length > 0 ? fetchedMissions : MISSIONS);

@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { Session, User } from "@supabase/supabase-js";
 import React, {
   createContext,
   useCallback,
@@ -7,8 +6,6 @@ import React, {
   useEffect,
   useState,
 } from "react";
-
-import { supabase } from "@/lib/supabase";
 
 export type RankName =
   | "Çaylak"
@@ -86,11 +83,8 @@ interface UserContextType extends UserState {
   daysUntilUsernameChange: () => number;
   isLoading: boolean;
   getBadges: () => BadgeData[];
-  authUser: User | null;
-  session: Session | null;
   isAnonymous: boolean;
   signOut: () => Promise<void>;
-  signInAnonymously: () => Promise<{ error: string | null }>;
 }
 
 const defaultState: UserState = {
@@ -132,48 +126,22 @@ function calcStreak(lastPlayDate: string | null, currentStreak: number): { strea
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<UserState>(defaultState);
   const [isLoading, setIsLoading] = useState(true);
-  const [authUser, setAuthUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     let mounted = true;
-
-    const init = async () => {
-      try {
-        const [storedRaw, { data: sessionData }] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEY),
-          supabase.auth.getSession(),
-        ]);
-
-        if (!mounted) return;
-
-        if (storedRaw) {
-          const parsed = JSON.parse(storedRaw);
-          setState({ ...defaultState, ...parsed });
-        }
-
-        if (sessionData.session) {
-          setSession(sessionData.session);
-          setAuthUser(sessionData.session.user);
-        }
-      } catch {
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    init();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
       if (!mounted) return;
-      setSession(newSession);
-      setAuthUser(newSession?.user ?? null);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          setState({ ...defaultState, ...parsed });
+        } catch {}
+      }
+      setIsLoading(false);
+    }).catch(() => {
+      if (mounted) setIsLoading(false);
     });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => { mounted = false; };
   }, []);
 
   const save = useCallback(async (next: UserState) => {
@@ -184,18 +152,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
     await AsyncStorage.removeItem(STORAGE_KEY);
     setState(defaultState);
-  }, []);
-
-  const signInAnonymously = useCallback(async (): Promise<{ error: string | null }> => {
-    try {
-      const { error } = await supabase.auth.signInAnonymously();
-      return { error: error?.message ?? null };
-    } catch (e: unknown) {
-      return { error: e instanceof Error ? e.message : "Misafir girişi başarısız" };
-    }
   }, []);
 
   const getRank = (xp: number): Rank => {
@@ -205,7 +163,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return RANKS[0];
   };
 
-  const isAnonymous = authUser?.is_anonymous ?? false;
+  const isAnonymous = !state.username;
 
   const rank = getRank(state.xp);
   const rankIdx = RANKS.indexOf(rank);
@@ -352,11 +310,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         daysUntilUsernameChange,
         isLoading,
         getBadges,
-        authUser,
-        session,
         isAnonymous,
         signOut,
-        signInAnonymously,
       }}
     >
       {children}
