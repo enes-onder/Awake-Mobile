@@ -165,3 +165,5 @@ overrides:
   js-yaml: "^4.2.0"
   # security: fix GHSA-4x5r-pxfx-6jf8 (@babel/core ReDoS — affects <7.29.1)
   "@babel/core": "^7.29.7"
+  # security: fix GHSA-6v5v-wf23-fmfq (markdown-it ReDoS — affects <14.2.0)
+  markdown-it: "^14.2.0"
