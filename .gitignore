@@ -47,3 +47,10 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Replit Agent — konuşmalar, hafıza, loglar ve görseller
+.agents/
+.replit-agent/
+attached_assets/
+screenshots/
+/tmp/logs/
