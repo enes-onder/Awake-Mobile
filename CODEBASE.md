@@ -97,7 +97,9 @@ Supabase veritabanını sıfırdan kuran tek dosya. Tablo oluşturma, RLS politi
 - `authUser` var + `username` boş → `/onboarding`
 - `authUser` + `username` + anonim değil + onboarding'deyse → `/(tabs)`
 
-**`onboarding.tsx`** — Adım state machine: `"auth" → "email"/"phone"/"otp" → "name"`. Auth başarılı olunca `useEffect` `authUser` değişimini yakalar ve `"name"` adımına geçer.
+**`onboarding.tsx`** — İnce orkestratör (~80 satır). `useOnboardingAuth` hook'undan gelen `auth.step` değerine göre ilgili adım bileşenini (`AuthStep`, `EmailStep`, `PhoneStep`, `OtpStep`, `NameStep`) render eder. İş mantığı hook'ta, UI bileşenlerde yaşar.
+
+**`edit-profile.tsx`** — İnce orkestratör (~65 satır). `useEditProfile` hook'undan gelen state'i alt bileşenlere (`EditProfileTopBar`, `UsernameField`, `BioField`, `TopicsPicker`, `InfoCard`, `UsernameWarningModal`) dağıtır.
 
 → Ekran detayları: [`docs/SCREENS.md`](docs/SCREENS.md)
 → Auth akışı: [`docs/AUTH.md`](docs/AUTH.md)
@@ -105,6 +107,39 @@ Supabase veritabanını sıfırdan kuran tek dosya. Tablo oluşturma, RLS politi
 ---
 
 ### `components/` — UI Bileşenleri
+
+**Mimari:** Her bileşenin tek sorumluluğu var. Ekran bileşenleri iş mantığı barındırmaz; sadece render eder.
+
+#### `onboarding/` — Onboarding Adım Bileşenleri
+
+| Dosya | Kısaca |
+|---|---|
+| `types.ts` | `Step`, `AuthProvider`, `ProviderItem` tipleri |
+| `styles.ts` | Tüm onboarding ekranlarının paylaşımlı StyleSheet'i |
+| `GlowRing.tsx` | Kalkan ikonunun etrafındaki nabız animasyonlu halka |
+| `OnboardingLogo.tsx` | GlowRing + kalkan ikonu — tüm adımlarda paylaşımlı |
+| `ErrorBox.tsx` | Hata/başarı mesaj kutusu (✅ öneki başarıyı ayırt eder) |
+| `BackButton.tsx` | Sol üst ok butonu |
+| `AuthStep.tsx` | Provider seçim ekranı (Google, Apple, e-posta, telefon, misafir) |
+| `EmailStep.tsx` | E-posta giriş/kayıt formu (şifre ve magic link modları) |
+| `PhoneStep.tsx` | Telefon numarası giriş formu (+90 otomatik ön eki) |
+| `OtpStep.tsx` | 6 haneli SMS kodu doğrulama |
+| `NameStep.tsx` | Kod adı seçimi + özellik etiketleri |
+
+#### `edit-profile/` — Profil Düzenleme Bileşenleri
+
+| Dosya | Kısaca |
+|---|---|
+| `styles.ts` | Tüm profil düzenleme bileşenlerinin paylaşımlı StyleSheet'i |
+| `SectionHeader.tsx` | "KOD ADI", "BİO" gibi bölüm başlıkları |
+| `EditProfileTopBar.tsx` | Geri butonu + sayfa başlığı + Kaydet butonu |
+| `UsernameField.tsx` | Kullanıcı adı inputu + kilit rozeti + cooldown uyarısı |
+| `BioField.tsx` | Çok satırlı bio textarea + 80 karakter sayacı |
+| `TopicsPicker.tsx` | 8 konuluk chip grid seçici (TOPICS sabiti burada) |
+| `InfoCard.tsx` | "Değişiklikler hemen kaydedilir" bilgi kartı |
+| `UsernameWarningModal.tsx` | 30 günlük cooldown uyarı modal'ı |
+
+#### Paylaşımlı Bileşenler
 
 | Dosya | Kısaca |
 |---|---|
@@ -137,6 +172,34 @@ Supabase veritabanını sıfırdan kuran tek dosya. Tablo oluşturma, RLS politi
 
 ### `hooks/` — React Hook'ları
 
+**Mimari:** Hook'lar iş mantığını barındırır; bileşenler sadece hook'tan gelen veriyi render eder. Hiçbir hook JSX döndürmez.
+
+#### `useOnboardingAuth.ts` — Onboarding Auth Hook'u
+
+Tüm onboarding state'ini ve Supabase auth işlemlerini kapsar. `app/onboarding.tsx` bunu tüketir.
+
+```typescript
+const auth = useOnboardingAuth();
+// auth.step, auth.setStep
+// auth.loading, auth.error, auth.clearError
+// auth.handleProviderSelect, auth.handleEmailAuth
+// auth.handleSendOTP, auth.handleVerifyOTP
+// auth.handleAnonymousSignIn, auth.handleStart
+// auth.emailInput, auth.passwordInput, auth.phoneInput, ...
+```
+
+#### `useEditProfile.ts` — Profil Düzenleme Hook'u
+
+Form state'i ve kaydetme mantığını kapsar. `app/edit-profile.tsx` bunu tüketir.
+
+```typescript
+const profile = useEditProfile();
+// profile.usernameInput, profile.bioInput, profile.favoriteTopic
+// profile.canChangeName, profile.daysLeft, profile.hasChanges
+// profile.handleSave()
+// profile.showUsernameWarning, profile.setShowUsernameWarning
+```
+
 #### `useResponsive.ts` — Responsive Tasarım Hook'u
 
 Tüm ekranların ve bazı bileşenlerin kullandığı **paylaşımlı** hook. Ekran genişliğine göre ölçek, font boyutu, padding ve tablet kırılım noktası hesaplar.
@@ -145,13 +208,11 @@ Tüm ekranların ve bazı bileşenlerin kullandığı **paylaşımlı** hook. Ek
 import { useResponsive } from "@/hooks/useResponsive";
 const r = useResponsive();
 // r.fs(18)   → ölçekli font
-// r.hp(20)   → ölçekli padding
+// r.hp       → yatay padding değeri
 // r.maxW     → içerik max genişliği
 // r.isTablet → genişlik ≥ 600px
 // r.scale    → ham çarpan (0.9–1.25)
 ```
-
-Ölçek hesabı: `Math.min(Math.max(width / 390, 0.9), 1.25)`
 
 → Detaylar: [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md)
 

@@ -51,41 +51,45 @@ SafeAreaProvider
 
 ---
 
-## `onboarding.tsx` — Giriş ve Kayıt Ekranı
+## `onboarding.tsx` — Giriş ve Kayıt Ekranı (Orkestratör)
 
-İlk açılışta ya da oturum açılmamışsa gösterilir. 5 adımlı state machine içerir.
+İlk açılışta ya da oturum açılmamışsa gösterilir. **~80 satır ince orkestratör** — iş mantığı `useOnboardingAuth` hook'unda, UI her adım bileşeninde yaşar.
+
+### Mimari
+
+```
+app/onboarding.tsx          ← Sadece step routing (auth.step'e göre bileşen seçer)
+hooks/useOnboardingAuth.ts  ← Tüm state + Supabase çağrıları
+components/onboarding/
+  AuthStep.tsx              ← Provider seçimi
+  EmailStep.tsx             ← E-posta formu
+  PhoneStep.tsx             ← Telefon formu
+  OtpStep.tsx               ← OTP doğrulama
+  NameStep.tsx              ← Kod adı seçimi
+  OnboardingLogo.tsx        ← Paylaşımlı logo (GlowRing + kalkan)
+  ErrorBox.tsx              ← Hata/başarı mesajı
+  BackButton.tsx            ← Geri ok butonu
+  styles.ts                 ← Tüm adımların paylaşımlı stilleri
+```
 
 ### Adımlar
 
-| Adım | Görüntü | Açıklama |
+| Adım | Bileşen | Açıklama |
 |---|---|---|
-| `auth` | Giriş yöntemi seçimi | Google, Apple, E-posta, Telefon butonları + Misafir seçeneği |
-| `email` | E-posta formu | Şifre ile veya magic link; kayıt/giriş toggle'ı |
-| `phone` | Telefon formu | +90 numarası giriş, "SMS Gönder" butonu |
-| `otp` | OTP doğrulama | 6 haneli kod girişi |
-| `name` | Kod adı seçimi | Min 2, max 18 karakter; "Göreve Başla" → `/(tabs)` |
-
-### Animasyonlar
-- `FadeInUp.springify()` — adım container'ı
-- `FadeInDown.delay(n).springify()` — her buton sıralı olarak
-- `GlowRing` bileşeni: kalkan ikonunun etrafında dönen parlak halka
+| `auth` | `AuthStep` | Google, Apple, E-posta, Telefon + Misafir seçeneği |
+| `email` | `EmailStep` | Şifre veya magic link modu; kayıt/giriş toggle'ı |
+| `phone` | `PhoneStep` | +90 ön eki otomatik; "SMS Gönder" |
+| `otp` | `OtpStep` | 6 haneli kod; "Tekrar gönder" bağlantısı |
+| `name` | `NameStep` | Min 2, max 18 karakter; "Göreve Başla" → `/(tabs)` |
 
 ### Auth Sonrası Otomatik Geçiş
 
-```typescript
-useEffect(() => {
-  if (authUser && !username && (step === "auth" || step === "email" || step === "phone")) {
-    setStep("name");
-  }
-}, [authUser]);
-```
+`authUser` değişimi `app/onboarding.tsx` içindeki `useEffect` tarafından izlenir. Giriş başarılı + kod adı yok → otomatik `"name"` adımına geçiş. Google/Apple gibi async OAuth akışlarını da yakalar.
 
-Herhangi bir yöntemle giriş başarılı olunca ve kullanıcının henüz kod adı yoksa, bu hook otomatik olarak `name` adımına geçer.
-
-### Responsive
-- `container`: `alignItems: "center"`
-- `inner`: `width: "100%"`, `maxWidth: 430`
-- Buton ve başlık font boyutları `rfs()` ile ölçeklenir
+### Animasyonlar
+- `FadeInUp.springify()` — her adım container'ı giriş animasyonu
+- `FadeInDown.delay(n).springify()` — butonlar sıralı beliriş
+- `GlowRing` — kalkan ikonunun nabız atan parlak halkası
 
 ---
 
@@ -190,17 +194,33 @@ Her ders üç aşama içerir:
 
 ---
 
-## `edit-profile.tsx` — Profil Düzenleme
+## `edit-profile.tsx` — Profil Düzenleme (Orkestratör)
 
-Sağdan kayan ekran (`slide_from_right` animasyonu).
+Sağdan kayan ekran (`slide_from_right` animasyonu). **~65 satır ince orkestratör** — iş mantığı `useEditProfile` hook'unda, her alan ayrı bir bileşende yaşar.
+
+### Mimari
+
+```
+app/edit-profile.tsx              ← Sadece bileşenleri birleştirir, state dağıtır
+hooks/useEditProfile.ts           ← Form state, doğrulama, kaydetme mantığı
+components/edit-profile/
+  EditProfileTopBar.tsx           ← Geri + başlık + Kaydet butonu
+  UsernameField.tsx               ← Input + kilit + cooldown uyarısı
+  BioField.tsx                    ← Textarea + 80 karakter sayacı
+  TopicsPicker.tsx                ← 8 chip seçici grid (TOPICS sabiti burada)
+  InfoCard.tsx                    ← "Değişiklikler hemen kaydedilir" notu
+  UsernameWarningModal.tsx        ← Cooldown sınırı modal'ı
+  SectionHeader.tsx               ← "KOD ADI", "BİO" bölüm etiketleri
+  styles.ts                       ← Paylaşımlı StyleSheet
+```
 
 ### Düzenlenebilir Alanlar
 
 1. **Kod Adı** — 30 günlük cooldown; kilitliyse kilit ikonu + "X gün kaldı" modal
 2. **Bio** — Max 80 karakter; multiline; karakter sayacı
-3. **Favori Konu** — 8 chip seçeneği: Siyaset, Sağlık, Bilim, Ekonomi, Sosyal Medya, Çevre, Teknoloji, Genel
+3. **Favori Konu** — 8 chip: Siyaset, Sağlık, Bilim, Ekonomi, Sosyal Medya, Çevre, Teknoloji, Genel
 
-**Kaydet butonu:** Değişiklik yoksa gri ve disabled. Değişiklik varsa mavi ve aktif.
+**Kaydet butonu:** Değişiklik yoksa gri ve disabled; değişiklik varsa mavi ve aktif. Mantık `useEditProfile.hasChanges` ile hesaplanır.
 
 ---
 

@@ -2,7 +2,48 @@
 
 Tüm yeniden kullanılabilir UI parçaları `artifacts/mobile/components/` içindedir.
 
+**Mimari ilke:** Her bileşenin tek sorumluluğu var. Ekran dosyaları (`app/*.tsx`) sadece routing yapar; iş mantığı hook'larda, UI bu bileşenlerde yaşar.
+
 ---
+
+## `onboarding/` — Onboarding Adım Bileşenleri
+
+`app/onboarding.tsx` ince orkestratörüne hizmet eden bileşen grubu. Tüm auth state'i ve Supabase işlemleri `hooks/useOnboardingAuth.ts`'de; bu bileşenler sadece render eder.
+
+| Bileşen | Sorumluluğu |
+|---|---|
+| `GlowRing` | Nabız atan animasyonlu ışık halkası (Reanimated) |
+| `OnboardingLogo` | GlowRing + kalkan ikonu — tüm adımlarda paylaşımlı |
+| `ErrorBox` | Hata (kırmızı) / başarı (yeşil, ✅ öneki) mesaj kutusu |
+| `BackButton` | Sol üst ok butonu |
+| `AuthStep` | Provider seçim ekranı (4 provider + misafir) |
+| `EmailStep` | E-posta formu — şifre ve magic link modları, kayıt/giriş toggle'ı |
+| `PhoneStep` | Telefon formu — +90 ön eki otomatik |
+| `OtpStep` | 6 haneli SMS kodu; "Tekrar gönder" bağlantısı |
+| `NameStep` | Kod adı seçimi; özellik etiketleri (XP Kazan, Seri Kur, Rozet Al) |
+| `styles.ts` | Tüm adımların paylaşımlı `StyleSheet` nesnesi |
+| `types.ts` | `Step`, `AuthProvider`, `ProviderItem` TypeScript tipleri |
+
+---
+
+## `edit-profile/` — Profil Düzenleme Bileşenleri
+
+`app/edit-profile.tsx` ince orkestratörüne hizmet eden bileşen grubu. Form state ve kaydetme mantığı `hooks/useEditProfile.ts`'de.
+
+| Bileşen | Sorumluluğu |
+|---|---|
+| `SectionHeader` | "KOD ADI", "BİO" gibi küçük bölüm etiketleri |
+| `EditProfileTopBar` | Geri butonu + "Profili Düzenle" başlığı + Kaydet butonu |
+| `UsernameField` | Input + kullanıcı ikonu + kilit rozeti + cooldown uyarı satırı |
+| `BioField` | Multiline textarea + `{n}/80` karakter sayacı |
+| `TopicsPicker` | 8 konuluk chip grid; `TOPICS` sabiti bu dosyada tanımlı |
+| `InfoCard` | "Değişiklikler hemen kaydedilir" statik bilgi kartı |
+| `UsernameWarningModal` | 30 günlük cooldown modal'ı; kalan gün sayısı gösterir |
+| `styles.ts` | Tüm edit-profile bileşenlerinin paylaşımlı `StyleSheet` nesnesi |
+
+---
+
+## Paylaşımlı Bileşenler
 
 ## `SwipeCard.tsx` — Tinder-Stili Haber Kartı
 

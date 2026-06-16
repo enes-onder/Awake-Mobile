@@ -183,7 +183,7 @@ Aynı pattern dersler ve simülasyonlar için de uygulanır.
 
 ## Hook Kullanımı
 
-Her iki context için tek hook'lar vardır:
+Her iki context için temel hook'lar:
 
 ```typescript
 // UserContext
@@ -196,3 +196,29 @@ const { missions, lessons, lockedMissionIds, loading } = useContent();
 ```
 
 `useUser()` veya `useContent()`, ilgili provider dışında çağrılırsa hata fırlatır.
+
+---
+
+## Context'leri Tüketen Custom Hook'lar
+
+Context'lerin üzerine inşa edilmiş, ekrana özgü iş mantığını kapsayan hook'lar:
+
+### `useOnboardingAuth` (`hooks/useOnboardingAuth.ts`)
+
+`useUser()` context'ini tüketir. Tüm onboarding adım state'ini ve Supabase auth işlemlerini (Google, Apple, e-posta, telefon OTP, anonim) yönetir. `app/onboarding.tsx` tarafından kullanılır.
+
+```typescript
+import { useOnboardingAuth } from "@/hooks/useOnboardingAuth";
+const auth = useOnboardingAuth();
+// auth.step, auth.handleProviderSelect, auth.handleEmailAuth, ...
+```
+
+### `useEditProfile` (`hooks/useEditProfile.ts`)
+
+`useUser()` context'ini tüketir. Profil formu state'ini, değişiklik tespitini ve `handleSave` mantığını yönetir. `app/edit-profile.tsx` tarafından kullanılır.
+
+```typescript
+import { useEditProfile } from "@/hooks/useEditProfile";
+const profile = useEditProfile();
+// profile.usernameInput, profile.hasChanges, profile.handleSave, ...
+```

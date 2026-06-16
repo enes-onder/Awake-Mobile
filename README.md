@@ -38,22 +38,38 @@ Doğruluk Dedektifi; kullanıcıların sosyal medya paylaşımlarını analiz et
 ```
 dogruluk-dedektifi/
 ├── artifacts/
-│   ├── mobile/              ← Ana uygulama (Expo / React Native)
-│   │   ├── app/             ← Expo Router ekranları
-│   │   ├── components/      ← Yeniden kullanılabilir UI parçaları
-│   │   ├── context/         ← UserContext, ContentContext
-│   │   ├── data/            ← Offline yedek içerik (vakalar, dersler, simülasyonlar)
-│   │   ├── hooks/           ← useResponsive, useColors
-│   │   ├── constants/       ← Renk paleti
-│   │   └── lib/             ← Supabase istemcisi
+│   ├── mobile/                    ← Ana uygulama (Expo / React Native)
+│   │   ├── app/                   ← Expo Router ekranları (dosya adı = route)
+│   │   │   ├── _layout.tsx        ← Kök düzen, NavController, provider'lar
+│   │   │   ├── onboarding.tsx     ← /onboarding — ince orkestratör (~80 satır)
+│   │   │   ├── edit-profile.tsx   ← /edit-profile — ince orkestratör (~65 satır)
+│   │   │   └── (tabs)/            ← Sekme ekranları (index, lab, academy, profile)
+│   │   │
+│   │   ├── components/            ← Single Responsibility bileşenler
+│   │   │   ├── onboarding/        ← AuthStep, EmailStep, PhoneStep, OtpStep, NameStep + yardımcılar
+│   │   │   ├── edit-profile/      ← EditProfileTopBar, UsernameField, BioField, TopicsPicker + yardımcılar
+│   │   │   └── *.tsx              ← Paylaşımlı bileşenler (SwipeCard, XPBar, MissionCard vb.)
+│   │   │
+│   │   ├── hooks/                 ← Custom hook'lar
+│   │   │   ├── useOnboardingAuth.ts ← Tüm auth state + Supabase işlemleri
+│   │   │   ├── useEditProfile.ts    ← Profil form state + kaydetme mantığı
+│   │   │   ├── useResponsive.ts     ← Responsive tasarım hesapları
+│   │   │   └── useColors.ts         ← Renk sistemi
+│   │   │
+│   │   ├── context/               ← UserContext (auth + oyun), ContentContext (içerik)
+│   │   ├── data/                  ← Offline yedek içerik (vakalar, dersler, simülasyonlar)
+│   │   ├── constants/             ← Renk paleti
+│   │   └── lib/                   ← Supabase istemcisi
 │   │
-│   └── api-server/          ← Express.js REST API (altyapı hazır)
+│   └── api-server/                ← Express.js REST API (altyapı hazır)
 │
 ├── lib/                     ← Paylaşılan kütüphaneler (Drizzle, Zod, React Query)
 ├── supabase/                ← schema_and_seed.sql
 ├── docs/                    ← Özellik belgelemeleri
 └── package.json
 ```
+
+**Mimari ilke:** Her dosyanın tek sorumluluğu var. Ekran dosyaları (`app/*.tsx`) yalnızca routing yapar; iş mantığı hook'larda, UI hook'lardan bağımsız bileşenlerde yaşar.
 
 ---
 
@@ -142,10 +158,27 @@ cd dogruluk-dedektifi && pnpm install
 pnpm --filter @workspace/mobile run dev
 ```
 
-**Android emülatörü (Windows):**
-1. Android Studio indir + kur
-2. `ANDROID_HOME` ortam değişkeni: `C:\Users\SEN\AppData\Local\Android\Sdk`
-3. Expo çalışırken `a` bas
+**Android emülatörü (Windows) — Adım Adım:**
+
+1. **Java JDK 17** kur: https://adoptium.net → `Temurin 17 (LTS)` seç → `.msi` kur
+2. **Android Studio** indir + kur: https://developer.android.com/studio
+   - Kurulumda "Android Virtual Device" seçeneğini işaretle
+3. **SDK kurulumu:** Android Studio → `More Actions → SDK Manager`
+   - `SDK Platforms` sekmesi → **Android 14 (API 34)** işaretle → Apply
+   - `SDK Tools` sekmesi → **Android SDK Build-Tools**, **Android Emulator**, **Android SDK Platform-Tools** işaretle → Apply
+4. **Ortam değişkenleri** ekle (Sistem Özellikleri → Gelişmiş → Ortam Değişkenleri):
+   ```
+   ANDROID_HOME = C:\Users\<KULLANICI_ADIN>\AppData\Local\Android\Sdk
+   ```
+   Aynı pencerede `Path` değişkenine ekle:
+   ```
+   %ANDROID_HOME%\platform-tools
+   %ANDROID_HOME%\emulator
+   ```
+5. **Sanal cihaz oluştur:** Android Studio → `More Actions → Virtual Device Manager → Create Device`
+   - Pixel 7 → API 34 → Finish
+6. **Emülatörü başlat** (Virtual Device Manager'dan oynat düğmesi)
+7. Expo çalışırken terminalde `a` tuşuna bas → uygulama emülatöre yüklenir
 
 ### Linux (Ubuntu / Debian)
 

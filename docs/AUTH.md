@@ -45,17 +45,18 @@ ONBOARDING ADIMLARI:
 
 ### Otomatik Adım Geçişi
 
-`onboarding.tsx` içindeki `useEffect` hook'u `authUser` değişimini izler. Herhangi bir yöntemle giriş başarılı olunca — eğer kullanıcının henüz bir kod adı yoksa — otomatik olarak "name" adımına geçer:
+`useOnboardingAuth` hook'u tüm auth state'ini ve Supabase işlemlerini yönetir. Herhangi bir yöntemle giriş başarılı olunca — kullanıcının henüz kod adı yoksa — `app/onboarding.tsx` içindeki `useEffect` otomatik olarak `"name"` adımına geçer:
 
 ```typescript
+// app/onboarding.tsx
 useEffect(() => {
-  if (authUser && !username && (step === "auth" || step === "email" || step === "phone")) {
-    setStep("name");
+  if (authUser && !username && (auth.step === "auth" || auth.step === "email" || auth.step === "phone")) {
+    auth.setStep("name");
   }
 }, [authUser]);
 ```
 
-Bu sayede Google/Apple gibi async OAuth akışları da yaklanır.
+Bu sayede Google/Apple gibi async OAuth akışları da yakalanır.
 
 ---
 
@@ -161,5 +162,11 @@ const handleUrl = async (url: string) => {
 |---|---|
 | `lib/supabase.ts` | Supabase istemcisi yapılandırması |
 | `context/UserContext.tsx` | Auth state yönetimi, `signInAnonymously`, `signOut` |
-| `app/onboarding.tsx` | Giriş UI'ı, tüm auth akışları |
+| `hooks/useOnboardingAuth.ts` | Tüm auth handler'ları ve onboarding state'i |
+| `app/onboarding.tsx` | Adım routing orkestratörü (~80 satır) |
+| `components/onboarding/AuthStep.tsx` | Provider seçim UI'ı |
+| `components/onboarding/EmailStep.tsx` | E-posta form UI'ı |
+| `components/onboarding/PhoneStep.tsx` | Telefon form UI'ı |
+| `components/onboarding/OtpStep.tsx` | OTP doğrulama UI'ı |
+| `components/onboarding/NameStep.tsx` | Kod adı seçimi UI'ı |
 | `app/_layout.tsx` | `NavController` (yönlendirme), `DeepLinkHandler` |
