@@ -1,0 +1,76 @@
+import { StyleSheet } from "react-native";
+
+export const errorStyles = StyleSheet.create({
+  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+  iconBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  title: { fontFamily: "Inter_700Bold", fontSize: 22, textAlign: "center", marginBottom: 10 },
+  message: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  primaryBtn: {
+    width: "100%",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  primaryBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
+  secondaryBtn: {
+    width: "100%",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  secondaryBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  devBtn: {
+    marginTop: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  devBtnText: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 36,
+    gap: 12,
+  },
+  modalTitle: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  errorNameBox: {
+    borderRadius: 10,
+    padding: 12,
+  },
+  errorName: { fontFamily: "Inter_700Bold", fontSize: 13 },
+  errorMessage: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 4, lineHeight: 18 },
+  stackBox: {
+    borderRadius: 10,
+    padding: 12,
+    maxHeight: 220,
+  },
+  stackText: { fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14 },
+  closeModalBtn: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 6,
+  },
+  closeModalBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#fff" },
+});
