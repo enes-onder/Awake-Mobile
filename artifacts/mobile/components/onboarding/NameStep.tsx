@@ -21,7 +21,7 @@ import { styles } from "./styles";
 interface NameStepProps {
   nameInput: string;
   setNameInput: (v: string) => void;
-  nameInputRef: React.RefObject<TextInput>;
+  nameInputRef: React.RefObject<TextInput | null>;
   canStart: boolean;
   handleStart: () => void;
   selectedProvider: AuthProvider | null;

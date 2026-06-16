@@ -32,7 +32,7 @@ export interface OnboardingAuthState {
 
   nameInput: string;
   setNameInput: (v: string) => void;
-  nameInputRef: React.RefObject<TextInput>;
+  nameInputRef: React.RefObject<TextInput | null>;
   canStart: boolean;
 
   providerMap: ProviderItem[];
