@@ -26,6 +26,24 @@ Tüm yeniden kullanılabilir UI parçaları `artifacts/mobile/components/` için
 
 ---
 
+## `profile/` — Profil Ekranı Bileşenleri
+
+`app/(tabs)/profile.tsx` ince orkestratörüne hizmet eden bileşen grubu. Platform padding ve istatistik verileri `hooks/useProfile.ts`'de hesaplanır; bu bileşenler sadece render eder.
+
+| Bileşen | Sorumluluğu |
+|---|---|
+| `ProfileInitials` | İsmin baş harflerinden oluşan daire avatar |
+| `ProfileHeader` | "Profil" başlığı + sağda "Düzenle" butonu |
+| `HeroCard` | Avatar, isim, bio, favori konu pill, `RankBadge`, `XPBar`, streak satırı |
+| `AnonBanner` | Misafir hesabı uyarısı; onboarding'e yönlendirir |
+| `StatsGrid` | `StatItem[]` alan 4'lü kart ızgarası (ikon, renk, değer, etiket) |
+| `RankPath` | `RANKS` + `userXp` + `rankIdx` alan yatay rütbe haritası |
+| `CertCard` | 800 XP eşiği ilerleme çubuğu + kazanılınca "✓" rozeti |
+| `SignOutButton` | Oturumu kapatma butonu (kırmızı, `log-out` ikonu) |
+| `styles.ts` | Tüm profil bileşenlerinin paylaşımlı `StyleSheet` nesnesi |
+
+---
+
 ## `edit-profile/` — Profil Düzenleme Bileşenleri
 
 `app/edit-profile.tsx` ince orkestratörüne hizmet eden bileşen grubu. Form state ve kaydetme mantığı `hooks/useEditProfile.ts`'de.

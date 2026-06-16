@@ -178,19 +178,36 @@ Her ders üç aşama içerir:
 
 ---
 
-## `(tabs)/profile.tsx` — Profil
+## `(tabs)/profile.tsx` — Profil (Orkestratör)
 
-### Bölümler
+**~65 satır ince orkestratör.** İş mantığı `useProfile` hook'unda, her bölüm ayrı bir bileşende yaşar.
 
-1. **Hero Kartı** — Kullanıcı adı baş harflerinden avatar dairesi; bio; favori konu etiketi; `RankBadge`; `XPBar`; streak sayısı
-2. **4'lü İstatistik Izgarası** — Çözülen vaka / Doğruluk % / Toplam XP / Rozet sayısı
-3. **Rütke Yolu** — 5 rütkenin yatay bağlantılı haritası; geçilmiş bağlantılar renkli, ilerisi gri
-4. **Dijital Sertifika** — 800 XP eşiği ilerleme çubuğu; eşikte "Sertifika Kazanıldı" mesajı
-5. **Düzenle Butonu** → `/edit-profile` ekranına gider
+### Mimari
 
-### Responsive
-- `maxWidth: r.maxW` ile ortalanmış içerik
-- İsim ve stat değerleri `r.fs()` ile ölçeklenir
+```
+app/(tabs)/profile.tsx          ← Sadece bileşenleri sıralar, state dağıtır
+hooks/useProfile.ts             ← topPadding, rankIdx, statItems hesabı
+components/profile/
+  ProfileHeader.tsx             ← "Profil" başlığı + "Düzenle" butonu
+  HeroCard.tsx                  ← Avatar, isim, bio, konu, rütbe, XP, streak
+  AnonBanner.tsx                ← Misafir uyarı banner'ı
+  StatsGrid.tsx                 ← 4'lü istatistik kartları
+  RankPath.tsx                  ← 5 rütkenin yatay haritası
+  CertCard.tsx                  ← Dijital sertifika (800 XP eşiği)
+  SignOutButton.tsx              ← Çıkış yapma butonu
+  ProfileInitials.tsx           ← Baş harflerden avatar dairesi
+  styles.ts                     ← Paylaşımlı StyleSheet
+```
+
+### Bölümler (yukarıdan aşağı)
+
+1. **ProfileHeader** — "Profil" başlığı + sağda "Düzenle" butonu → `/edit-profile`
+2. **HeroCard** — Avatar dairesi (baş harfler); isim; bio; favori konu pill; `RankBadge`; `XPBar`; streak satırı
+3. **AnonBanner** *(yalnızca misafir hesaplarda)* — Onboarding'e yönlendiren uyarı banner'ı
+4. **StatsGrid** — Çözülen vaka / Doğruluk % / Toplam XP / Rozet — 4'lü kart ızgarası
+5. **RankPath** — 5 rütkenin yatay bağlantılı haritası; geçilmiş bağlantılar renkli, ilerisi gri
+6. **CertCard** — 800 XP eşiği ilerleme çubuğu; eşikte "Sertifika Kazanıldı" mesajı
+7. **SignOutButton** — Oturumu kapatma butonu
 
 ---
 

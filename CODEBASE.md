@@ -139,6 +139,20 @@ Supabase veritabanını sıfırdan kuran tek dosya. Tablo oluşturma, RLS politi
 | `InfoCard.tsx` | "Değişiklikler hemen kaydedilir" bilgi kartı |
 | `UsernameWarningModal.tsx` | 30 günlük cooldown uyarı modal'ı |
 
+#### `profile/` — Profil Ekranı Bileşenleri
+
+| Dosya | Kısaca |
+|---|---|
+| `styles.ts` | Tüm profil bileşenlerinin paylaşımlı StyleSheet'i |
+| `ProfileInitials.tsx` | Baş harflerden oluşan avatar dairesi |
+| `ProfileHeader.tsx` | "Profil" başlığı + "Düzenle" butonu |
+| `HeroCard.tsx` | Avatar, isim, bio, konu pill, RankBadge, XPBar, streak satırı |
+| `AnonBanner.tsx` | Misafir hesabı uyarı banner'ı (onboarding'e yönlendirir) |
+| `StatsGrid.tsx` | 4'lü istatistik kartları (vaka, doğruluk, XP, rozet) |
+| `RankPath.tsx` | 5 rütkenin yatay bağlantılı ilerleme haritası |
+| `CertCard.tsx` | Dijital sertifika kartı (800 XP eşiği ilerleme çubuğu) |
+| `SignOutButton.tsx` | Çıkış yapma butonu |
+
 #### Paylaşımlı Bileşenler
 
 | Dosya | Kısaca |
@@ -186,6 +200,14 @@ const auth = useOnboardingAuth();
 // auth.handleSendOTP, auth.handleVerifyOTP
 // auth.handleAnonymousSignIn, auth.handleStart
 // auth.emailInput, auth.passwordInput, auth.phoneInput, ...
+```
+
+#### `useProfile.ts` — Profil Ekranı Hook'u
+
+Platform bazlı üst padding, aktif rütke indeksi ve istatistik veri listesini hesaplar. `app/(tabs)/profile.tsx` tarafından kullanılır.
+
+```typescript
+const { topPadding, rankIdx, statItems, user } = useProfile();
 ```
 
 #### `useEditProfile.ts` — Profil Düzenleme Hook'u
