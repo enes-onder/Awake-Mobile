@@ -8,10 +8,10 @@ Bu belge projedeki **her klasör ve dosyanın** ne işe yaradığını açıklar
 
 | Konu | Detaylı Belge |
 |---|---|
-| Auth sistemi (Supabase, OAuth, anonim giriş) | [`docs/AUTH.md`](docs/AUTH.md) |
+| Auth sistemi (kullanıcı adı tabanlı, AsyncStorage) | [`docs/AUTH.md`](docs/AUTH.md) |
 | Responsive tasarım ve `useResponsive` hook | [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md) |
 | XP, rütbe, rozet, streak oyun sistemleri | [`docs/GAME_MECHANICS.md`](docs/GAME_MECHANICS.md) |
-| Supabase şeması, tablolar, seed data | [`docs/DATABASE.md`](docs/DATABASE.md) |
+| PostgreSQL şeması, tablolar, seed data | [`docs/DATABASE.md`](docs/DATABASE.md) |
 | Her ekranın detaylı açıklaması | [`docs/SCREENS.md`](docs/SCREENS.md) |
 | Her bileşenin props/davranış açıklaması | [`docs/COMPONENTS.md`](docs/COMPONENTS.md) |
 | UserContext ve ContentContext | [`docs/CONTEXTS.md`](docs/CONTEXTS.md) |
@@ -48,10 +48,9 @@ pnpm'e hangi klasörlerin ayrı paket olduğunu söyler. `artifacts/mobile`, `ar
 
 ---
 
-## `/supabase/`
+## `/lib/db/` — Veritabanı Şeması
 
-### `schema_and_seed.sql`
-Supabase veritabanını sıfırdan kuran tek dosya. Tablo oluşturma, RLS politikaları ve başlangıç verisi (8 vaka, 6 ders, 3 simülasyon) içerir.
+Drizzle ORM ile tanımlanmış **Replit PostgreSQL** şeması. `DATABASE_URL` ortam değişkeninden bağlantı bilgisini okur. Tablo tanımları, ilişkiler ve migration dosyaları bu pakette yaşar. Başlangıç verisi (8 vaka, 6 ders, 3 simülasyon) seed script ile yüklenir.
 
 → Detaylar: [`docs/DATABASE.md`](docs/DATABASE.md)
 
@@ -97,7 +96,7 @@ Supabase veritabanını sıfırdan kuran tek dosya. Tablo oluşturma, RLS politi
 - `authUser` var + `username` boş → `/onboarding`
 - `authUser` + `username` + anonim değil + onboarding'deyse → `/(tabs)`
 
-**`onboarding.tsx`** — İnce orkestratör (~80 satır). `useOnboardingAuth` hook'undan gelen `auth.step` değerine göre ilgili adım bileşenini (`AuthStep`, `EmailStep`, `PhoneStep`, `OtpStep`, `NameStep`) render eder. İş mantığı hook'ta, UI bileşenlerde yaşar.
+**`onboarding.tsx`** — İnce orkestratör. `useOnboardingAuth` hook'undan gelen `auth.step` değerine göre ilgili adım bileşenini render eder. Son adım `NameStep`, artık `ScrollView` içine alınmış 3 vizyon kartı ("Gerçek Beceri Öğren", "Her Gün İlerle", "Haber Kandırmacasına Dur De") içerir. İş mantığı hook'ta, UI bileşenlerde yaşar.
 
 **`edit-profile.tsx`** — İnce orkestratör (~65 satır). `useEditProfile` hook'undan gelen state'i alt bileşenlere (`EditProfileTopBar`, `UsernameField`, `BioField`, `TopicsPicker`, `InfoCard`, `UsernameWarningModal`) dağıtır.
 
@@ -177,8 +176,8 @@ Supabase veritabanını sıfırdan kuran tek dosya. Tablo oluşturma, RLS politi
 
 | Dosya | Kısaca |
 |---|---|
-| `UserContext.tsx` | Auth (Supabase) + tüm oyun verisi (XP, rozet, streak vb.) + AsyncStorage |
-| `ContentContext.tsx` | Supabase'den içerik çekme + XP kilitleme mantığı + offline fallback |
+| `UserContext.tsx` | Kullanıcı adı tabanlı yerel oturum (AsyncStorage) + tüm oyun verisi (XP, rozet, streak vb.) |
+| `ContentContext.tsx` | REST API'den içerik çekme (vakalar, dersler, simülasyonlar) + XP kilitleme mantığı + offline fallback |
 
 → Detaylar: [`docs/CONTEXTS.md`](docs/CONTEXTS.md)
 
@@ -190,16 +189,14 @@ Supabase veritabanını sıfırdan kuran tek dosya. Tablo oluşturma, RLS politi
 
 #### `useOnboardingAuth.ts` — Onboarding Auth Hook'u
 
-Tüm onboarding state'ini ve Supabase auth işlemlerini kapsar. `app/onboarding.tsx` bunu tüketir.
+Tüm onboarding state'ini ve kullanıcı adı tabanlı kayıt/giriş işlemlerini kapsar. `app/onboarding.tsx` bunu tüketir.
 
 ```typescript
 const auth = useOnboardingAuth();
 // auth.step, auth.setStep
 // auth.loading, auth.error, auth.clearError
-// auth.handleProviderSelect, auth.handleEmailAuth
-// auth.handleSendOTP, auth.handleVerifyOTP
-// auth.handleAnonymousSignIn, auth.handleStart
-// auth.emailInput, auth.passwordInput, auth.phoneInput, ...
+// auth.handleStart, auth.handleNameSubmit
+// auth.usernameInput, ...
 ```
 
 #### `useProfile.ts` — Profil Ekranı Hook'u
@@ -271,23 +268,13 @@ Her zaman karanlık tema döndürür.
 
 ### `lib/`
 
-#### `supabase.ts` — Supabase İstemcisi
+#### `supabase.ts` — Boş Modül
 
 ```typescript
-const SUPABASE_URL = "https://tojpdbexarwradtepwny.supabase.co";
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
-  },
-});
+export {};
 ```
 
-Oturumlar `AsyncStorage`'da kalıcı tutulur; uygulama kapatılsa da kullanıcı oturumda kalır.
+Supabase bağımlılığı projeden tamamen kaldırıldı. Dosya eski import zincirlerini kırmamak için boş modül olarak bırakıldı. Auth, kullanıcı adı + `AsyncStorage` tabanlı yerel oturumla yönetilir; içerik `/api` REST uç noktasından çekilir.
 
 ---
 
@@ -356,14 +343,13 @@ Bir branch merge'inden sonra otomatik çalışır. `pnpm install` ve gerekli kur
 
 ## Ortam Değişkenleri
 
-| Dosya | Değişken | Zorunlu | Açıklama |
-|---|---|---|---|
-| `artifacts/mobile/.env` | `EXPO_PUBLIC_SUPABASE_URL` | Hayır* | Supabase URL |
-| `artifacts/mobile/.env` | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Hayır* | Supabase anonim anahtar |
-| `artifacts/api-server/.env` | `DATABASE_URL` | API için evet | PostgreSQL bağlantı dizesi |
-| `artifacts/api-server/.env` | `PORT` | Hayır | API portu (varsayılan 8080) |
+| Değişken | Zorunlu | Açıklama |
+|---|---|---|
+| `DATABASE_URL` | API için evet | Replit PostgreSQL bağlantı dizesi (api-server tarafından okunur) |
+| `PORT` | Hayır | API portu (varsayılan 3001) |
+| `EXPO_PUBLIC_API_URL` | Hayır | Mobil uygulamanın API endpoint'i (varsayılan: `http://localhost:3001/api`) |
 
-*Olmadan uygulama çalışır ama yerel yedek verileri kullanır.
+> Supabase ortam değişkenleri (`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`) artık kullanılmıyor. Supabase bağımlılığı tamamen kaldırıldı.
 
 ---
 
@@ -373,17 +359,16 @@ Bir branch merge'inden sonra otomatik çalışır. `pnpm install` ve gerekli kur
 Uygulama açılır
       ↓
 _layout.tsx → UserContext init:
-  AsyncStorage'dan oyun verisi yükle +
-  Supabase'den mevcut oturumu kontrol et
+  AsyncStorage'dan kullanıcı adı + oyun verisi yükle
       ↓
 NavController tetiklenir:
-  authUser yok? → /onboarding
-  username boş? → /onboarding
-  her şey tamam? → /(tabs)
+  username yok? → /onboarding
+  username var? → /(tabs)
       ↓
-ContentContext → Supabase'den içerik çek
-  Başarılı → Supabase verileri kullan
-  Başarısız → data/*.ts yerel yedekler
+ContentContext → REST API'den içerik çek
+  GET /api/missions, /api/lessons, /api/simulations
+  Başarılı → API verilerini kullan
+  Başarısız → data/*.ts yerel yedekler (offline fallback)
       ↓
 Kullanıcı oynar (lab, academy)
       ↓
@@ -391,3 +376,7 @@ UserContext.completeMission() / earnXP()
       ↓
 AsyncStorage'a kaydet → Ekran güncellenir
 ```
+
+## Güvenlik Notu
+
+`markdown-it` paketi `14.2.0` sürümünde kullanılmaktadır. Bu sürüm, CVE-2026-48988 (smartquotes kuralında ikinci dereceden karmaşıklık DoS) yamasını içermektedir. Güvenlik için `>= 14.2.0` sürümü zorunludur.

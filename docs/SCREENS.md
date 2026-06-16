@@ -80,7 +80,19 @@ components/onboarding/
 | `email` | `EmailStep` | Şifre veya magic link modu; kayıt/giriş toggle'ı |
 | `phone` | `PhoneStep` | +90 ön eki otomatik; "SMS Gönder" |
 | `otp` | `OtpStep` | 6 haneli kod; "Tekrar gönder" bağlantısı |
-| `name` | `NameStep` | Min 2, max 18 karakter; "Göreve Başla" → `/(tabs)` |
+| `name` | `NameStep` | Vizyon kartları + kod adı girişi; "Göreve Başla" → `/(tabs)` |
+
+### `NameStep` Düzeni
+
+`NameStep.tsx` artık `ScrollView` içine alınmıştır. Logo + tagline'dan hemen sonra 3 **vizyon kartı** sıralanır, ardından kullanıcı adı giriş alanı ve "Göreve Başla" butonu gelir:
+
+| Kart | İkon | Açıklama |
+|---|---|---|
+| Gerçek Beceri Öğren | 🛡️ | Tersine görsel arama, metadata analizi — hayatta kullanacağın teknikler |
+| Her Gün İlerle | 📈 | Seri sistemi ile her gün oynayarak rütbe kazan, sertifika al |
+| Haber Kandırmacasına Dur De | ⚡ | Akıllı olduğunu kanıtla — sahte haberler seni artık kandıramaz |
+
+Bu kartlar eskiden Karargah ekranında "Neden Bu Uygulama?" başlığı altında bulunuyordu. Yeni yerinde daha etkili: kullanıcı kod adı seçmeden önce uygulamanın değer önerisini görür.
 
 ### Auth Sonrası Otomatik Geçiş
 
@@ -115,7 +127,8 @@ Ana ekran. Kullanıcı durumunu özetler.
 4. **3 İstatistik Kutusu** — Çözülen vaka / Doğruluk % / Toplam XP — sıralı `FadeIn` ile görünür
 5. **Günlük Görev** — Tamamlanmamış ilk misyon öne çıkarılır; bugün oynanmamışsa "2× XP" rozeti; `PulseDot` mavi nokta
 6. **Aktif Vakalar** — Yatay kaydırmalı misyon kartları (max 4); "Tümüne Bak" → lab sekmesi
-7. **Tanıtım Kartları** — "Neden bu uygulama?" — 3 kart
+
+> **Not:** "Neden Bu Uygulama?" (3'lü vizyon kartı) bölümü Karargah'tan kaldırıldı. Oturum açmış kullanıcıya bu tanıtım içeriğini göstermek gereksiz alan tüketiyordu. İçerik `NameStep` onboarding ekranına taşındı — bkz. `onboarding.tsx` bölümü.
 
 ### Responsive
 - `maxWidth: r.maxW` ile içerik ortalanır
@@ -138,7 +151,11 @@ Ana ekran. Kullanıcı durumunu özetler.
 
 **Yanlış yanıt cezası:** `Math.round(xpReward × 0.4)` XP düşülür.
 
-**`CelebrationOverlay`:** Doğru/yanlış seçimde 1.5 saniyelik tam ekran animasyon.
+**`CelebrationOverlay`:** Doğru/yanlış seçimde **2.3 saniyelik** üst-ekran toast animasyonu (safe-area uyumlu, giriş/çıkış Reanimated ile). 2.3s sonra toast kaybolur, ardından 380ms gecikme ile sonuç ekranı açılır.
+
+**`result` Durum Düzeni:** Sonuç kartı `ScrollView` içinde (uzun açıklamalar için kaydırılabilir), aksiyon butonları (`Sonraki Vaka` / `Vaka Listesine Dön`) ScrollView dışında `resultActionBar` olarak ekranın en altına sabitlenmiştir. Bu yapı metin uzunluğundan bağımsız olarak butonların her zaman altta görünmesini sağlar.
+
+**İpucu Al −5 XP Geri Bildirimi:** `SwipeCard` içindeki "İpucu Al" butonuna basıldığında buton üzerinde kırmızı "−5 XP" floating text animasyonu 1.3 saniye boyunca görünür ve yukarı kayarak solar.
 
 ### Simülasyon
 - Listeden seçim → `SimulationPlayer` bileşenini açar
@@ -164,6 +181,11 @@ Her ders üç aşama içerir:
 1. **Okuma** — Paragraflar + ilerleme çubuğu
 2. **Quiz** — 4 seçenek; doğru +10 / yanlış -10 XP; cevap sonrası açıklama gösterilir
 3. **Bitiş** — Toplam XP + 2 saniye sonra listeye dön
+
+**Ders İçerik Ekranı Düzeni (`LessonPlayer`):**
+- İçerik alanı `justifyContent: "flex-start"` ile üstten aşağıya akar (`"center"` kullanılmaz)
+- Ders ikonu üstte `marginTop: 28px` / `marginBottom: 24px` ile nefes alır
+- "Devam Et" / "Sonraki Soru" aksyon butonu `continueBar` olarak `ScrollView` dışında ekranın altına sabitlenmiştir — metin kısalığından/uzunluğundan bağımsız
 
 ### Rozetler
 

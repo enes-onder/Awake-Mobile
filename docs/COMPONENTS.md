@@ -20,7 +20,7 @@ Tüm yeniden kullanılabilir UI parçaları `artifacts/mobile/components/` için
 | `EmailStep` | E-posta formu — şifre ve magic link modları, kayıt/giriş toggle'ı |
 | `PhoneStep` | Telefon formu — +90 ön eki otomatik |
 | `OtpStep` | 6 haneli SMS kodu; "Tekrar gönder" bağlantısı |
-| `NameStep` | Kod adı seçimi; özellik etiketleri (XP Kazan, Seri Kur, Rozet Al) |
+| `NameStep` | Kod adı seçimi; 3 vizyon kartı (Gerçek Beceri Öğren / Her Gün İlerle / Haber Kandırmacasına Dur De) + ScrollView wrapper; "Göreve Başla" butonu |
 | `styles.ts` | Tüm adımların paylaşımlı `StyleSheet` nesnesi |
 | `types.ts` | `Step`, `AuthProvider`, `ProviderItem` TypeScript tipleri |
 
@@ -166,7 +166,9 @@ interface CelebrationOverlayProps {
 - **Doğru:** Yeşil arka plan + "Doğru Tespit!" başlığı
 - **Yanlış:** Kırmızı arka plan + "Yanlış Tahmin" başlığı
 - `subMessage` ile ekstra açıklama eklenebilir (ör: kazanılan XP)
-- 1.5 saniye sonra otomatik `onDone()` tetiklenir
+- **2.3 saniye** sonra otomatik `onDone()` tetiklenir
+- Ekranın üstünde `SafeAreaView` ile konumlandırılmış toast stili (safe-area aware); eski tam ekran kaplamadan farklı
+- Giriş/çıkış Reanimated `FadeInDown` / `FadeOutUp` ile; `onDone` tetiklendikten 380ms sonra sonuç ekranı render edilir
 
 ---
 
