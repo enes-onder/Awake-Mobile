@@ -132,7 +132,7 @@ export default function LabScreen() {
     const baseXP = correct
       ? activeMission.xpReward
       : -Math.floor(activeMission.xpReward * 0.4);
-    const xpEarned = baseXP * multiplier;
+    const xpEarned = correct ? baseXP * multiplier : baseXP;
 
     user.earnXP(xpEarned);
     user.completeMission(activeMission.id, correct);
@@ -169,9 +169,8 @@ export default function LabScreen() {
   };
 
   const handleNextMission = () => {
-    const nextIdx = currentMissionIdx + 1;
-    if (nextIdx < pendingMissions.length) {
-      setCurrentMissionIdx(nextIdx);
+    if (pendingMissions.length > 0) {
+      setCurrentMissionIdx(0);
       setClueIndex(0);
       setLabState("active");
     } else {
@@ -266,6 +265,7 @@ export default function LabScreen() {
         >
           <Animated.View entering={FadeInDown.delay(120).springify()}>
             <SwipeCard
+              key={activeMission.id}
               mission={activeMission}
               clueIndex={clueIndex}
               onVerdictSelected={handleVerdict}
@@ -332,15 +332,23 @@ export default function LabScreen() {
             <Text style={[styles.resultMission, { color: colors.foreground }]}>
               {activeMission.title}
             </Text>
-            <View style={[styles.xpEarnedBox, { backgroundColor: colors.warning + "18", borderColor: colors.warning + "44" }]}>
-              <Feather name="zap" size={16} color={colors.warning} />
+            <View
+              style={[
+                styles.xpEarnedBox,
+                {
+                  backgroundColor: (lastXP >= 0 ? colors.warning : colors.fake) + "18",
+                  borderColor: (lastXP >= 0 ? colors.warning : colors.fake) + "44",
+                },
+              ]}
+            >
+              <Feather name="zap" size={16} color={lastXP >= 0 ? colors.warning : colors.fake} />
               <View>
-                <Text style={[styles.xpEarnedText, { color: colors.warning }]}>
-                  +{lastXP} XP kazandın
+                <Text style={[styles.xpEarnedText, { color: lastXP >= 0 ? colors.warning : colors.fake }]}>
+                  {lastXP >= 0 ? `+${lastXP} XP kazandın` : `${lastXP} XP kaybettin`}
                 </Text>
-                {lastMultiplier > 1 && (
+                {lastXP >= 0 && lastMultiplier > 1 && (
                   <Text style={{ color: colors.warning, fontFamily: "Inter_400Regular", fontSize: 10, opacity: 0.8 }}>
-                    Günlük 2x bonus dahil!
+                    Günlük 2× bonus dahil!
                   </Text>
                 )}
               </View>

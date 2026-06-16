@@ -66,19 +66,14 @@ export function SwipeCard({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
 
-    setTimeout(() => {
-      const toX = verdict === "real" ? 520 : -520;
-      Animated.timing(pan, {
-        toValue: { x: toX, y: -40 },
-        duration: 320,
-        useNativeDriver: false,
-      }).start(() => {
-        pan.setValue({ x: 0, y: 0 });
-        verdictLockedRef.current = false;
-        setVerdictLocked(null);
-        onVerdictSelected(verdict);
-      });
-    }, 380);
+    const toX = verdict === "real" ? width + 100 : -(width + 100);
+    Animated.timing(pan, {
+      toValue: { x: toX, y: -60 },
+      duration: 350,
+      useNativeDriver: false,
+    }).start(() => {
+      onVerdictSelected(verdict);
+    });
   };
 
   const panResponder = useRef(
