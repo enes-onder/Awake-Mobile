@@ -3,6 +3,7 @@ const net = require('net');
 
 const TARGET_PORT = 18115;
 const PROXY_PORT = 5000;
+const WARMUP_DELAY_MS = 15000;
 
 function proxyRequest(req, res) {
   const options = {
@@ -51,3 +52,56 @@ server.on('upgrade', (req, socket, head) => {
 server.listen(PROXY_PORT, () => {
   console.log(`Web proxy: localhost:${PROXY_PORT} → localhost:${TARGET_PORT}`);
 });
+
+function warmupBundle(platform) {
+  return new Promise((resolve) => {
+    const manifestReq = http.request(
+      {
+        hostname: 'localhost',
+        port: TARGET_PORT,
+        path: '/',
+        method: 'GET',
+        headers: {
+          Accept: 'application/expo+json,application/json',
+          'Expo-Platform': platform,
+          'Expo-SDK-Version': '54.0.0',
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            const manifest = JSON.parse(data);
+            const bundleUrl = manifest?.launchAsset?.url?.replace(
+              /https?:\/\/[^/]+/,
+              `http://localhost:${TARGET_PORT}`
+            );
+            if (!bundleUrl) return resolve();
+            console.log(`Warming ${platform} bundle...`);
+            const bundleReq = http.get(bundleUrl, (r) => {
+              let bytes = 0;
+              r.on('data', (c) => (bytes += c.length));
+              r.on('end', () => {
+                console.log(`${platform} bundle ready (${Math.round(bytes / 1024)}KB)`);
+                resolve();
+              });
+            });
+            bundleReq.on('error', () => resolve());
+            bundleReq.setTimeout(180000, () => { bundleReq.destroy(); resolve(); });
+          } catch {
+            resolve();
+          }
+        });
+      }
+    );
+    manifestReq.on('error', () => resolve());
+    manifestReq.end();
+  });
+}
+
+setTimeout(async () => {
+  console.log(`Metro ready — pre-warming bundles (this prevents 502 on first Expo Go scan)...`);
+  await Promise.all([warmupBundle('ios'), warmupBundle('android')]);
+  console.log('Bundles warmed — safe to scan QR code');
+}, WARMUP_DELAY_MS);
