@@ -54,3 +54,56 @@ Thumbs.db
 attached_assets/
 screenshots/
 /tmp/logs/
+
+
+# Supabase, Firebase veya Expo gizli anahtarlarını barındıran yerel dosyalar
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env.local
+
+# Expo ve React Native şifreleme anahtarları ile yerel kimlik bilgileri
+*.jks
+*.keystore
+*.p12
+*.key
+*.pem
+*.mobileprovision
+credential.json
+
+
+# Expo prebuild veya yerel derlemeler sırasında oluşan native klasör önbellekleri
+.gradle/
+build/
+capture/
+elgindev/
+output.json
+
+# iOS yerel derleme, bağımlılık ve Xcode önbellekleri
+Pods/
+DerivedData/
+*.xcworkspace
+*.xcodeproj
+ArchiveIntermediates/
+
+
+# Vercel, Netlify veya Docker gibi sunucu taraflı araçların yerel ayarları
+.vercel
+.netlify
+.dockerignore
+Dockerfile.local
+
+# Projeye dahil edilmemesi gereken yerel test veya dökümantasyon günlükleri
+.pnpm-debug.log*
+.eslintcache
+.stylelintcache
+*.js.map
+*.ts.map
+
+# Windows, Mac ve sıkıştırılmış arşiv dosyası kalıntıları
+*.zip
+*.tar.gz
+*.rar
+Desktop.ini
