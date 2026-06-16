@@ -215,14 +215,14 @@ function LessonPlayer({
             contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ maxWidth: r.maxW, alignSelf: "center", width: "100%", paddingHorizontal: r.hp, paddingTop: 16, flex: 1, justifyContent: "center", gap: r.sp(20), paddingVertical: 24 }}>
-              <View style={[styles.lessonIconBig, { backgroundColor: lesson.color + "18", width: r.sp(72), height: r.sp(72), borderRadius: r.sp(20) }]}>
+            <View style={{ maxWidth: r.maxW, alignSelf: "center", width: "100%", paddingHorizontal: r.hp, paddingTop: 8, justifyContent: "flex-start", gap: 0 }}>
+              <View style={[styles.lessonIconBig, { backgroundColor: lesson.color + "18", width: r.sp(72), height: r.sp(72), borderRadius: r.sp(20), marginTop: r.sp(28), marginBottom: r.sp(24) }]}>
                 <Feather name={lesson.icon as any} size={r.sp(36)} color={lesson.color} />
               </View>
-              <Text style={[styles.lessonStepLabel, { color: lesson.color, fontSize: r.fs(13) }]}>
+              <Text style={[styles.lessonStepLabel, { color: lesson.color, fontSize: r.fs(13), marginBottom: r.sp(10) }]}>
                 Ders · {contentIdx + 1}/{lesson.content.length}
               </Text>
-              <Text style={[styles.contentText, { color: colors.foreground, fontSize: r.fs(17), lineHeight: r.fs(28) }]}>
+              <Text style={[styles.contentText, { color: colors.foreground, fontSize: r.fs(16), lineHeight: r.fs(26) }]}>
                 {lesson.content[contentIdx]}
               </Text>
             </View>
