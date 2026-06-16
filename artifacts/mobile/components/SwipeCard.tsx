@@ -11,6 +11,12 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import ReAnimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSequence,
+} from "react-native-reanimated";
 
 import type { Mission } from "@/data/missions";
 import { useColors } from "@/hooks/useColors";
@@ -53,6 +59,31 @@ export function SwipeCard({
   const [swiping, setSwiping] = useState<"real" | "fake" | null>(null);
   const [verdictLocked, setVerdictLocked] = useState<"real" | "fake" | null>(null);
   const verdictLockedRef = useRef(false);
+
+  const xpPenaltyOpacity = useSharedValue(0);
+  const xpPenaltyTranslateY = useSharedValue(0);
+  const xpPenaltyAnimStyle = useAnimatedStyle(() => ({
+    opacity: xpPenaltyOpacity.value,
+    transform: [{ translateY: xpPenaltyTranslateY.value }],
+  }));
+
+  const showXPPenalty = () => {
+    xpPenaltyOpacity.value = withSequence(
+      withTiming(1, { duration: 120 }),
+      withTiming(1, { duration: 900 }),
+      withTiming(0, { duration: 280 })
+    );
+    xpPenaltyTranslateY.value = withSequence(
+      withTiming(0, { duration: 0 }),
+      withTiming(-28, { duration: 1300 })
+    );
+  };
+
+  const handleUseClueWithFeedback = () => {
+    xpPenaltyTranslateY.value = 0;
+    showXPPenalty();
+    onUseClue();
+  };
 
   const SWIPE_THRESHOLD = 55;
 
@@ -318,18 +349,28 @@ export function SwipeCard({
 
       <View style={styles.hintRow}>
         {clueIndex < mission.clues.length ? (
-          <TouchableOpacity
-            onPress={onUseClue}
-            style={[
-              styles.hintBtn,
-              { backgroundColor: colors.secondary, borderColor: colors.border },
-            ]}
-          >
-            <Feather name="search" size={14} color={colors.primary} />
-            <Text style={[styles.hintText, { color: colors.primary }]}>
-              İpucu Al ({mission.clues.length - clueIndex} kalan)
-            </Text>
-          </TouchableOpacity>
+          <View style={{ position: "relative", width: "100%" }}>
+            <TouchableOpacity
+              onPress={handleUseClueWithFeedback}
+              style={[
+                styles.hintBtn,
+                { backgroundColor: colors.secondary, borderColor: colors.border },
+              ]}
+            >
+              <Feather name="search" size={14} color={colors.primary} />
+              <Text style={[styles.hintText, { color: colors.primary }]}>
+                İpucu Al ({mission.clues.length - clueIndex} kalan)
+              </Text>
+            </TouchableOpacity>
+            <ReAnimated.Text
+              style={[
+                styles.xpPenaltyText,
+                xpPenaltyAnimStyle,
+              ]}
+            >
+              −5 XP
+            </ReAnimated.Text>
+          </View>
         ) : (
           <View
             style={[
@@ -546,6 +587,15 @@ const styles = StyleSheet.create({
   },
   hintRow: {
     width: "100%",
+  },
+  xpPenaltyText: {
+    position: "absolute",
+    right: 16,
+    top: -4,
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+    color: "#FF3B30",
+    pointerEvents: "none",
   },
   hintBtn: {
     flexDirection: "row",

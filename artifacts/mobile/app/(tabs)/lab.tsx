@@ -155,8 +155,10 @@ export default function LabScreen() {
 
     setTimeout(() => {
       setCelebVisible(false);
-      setLabState("result");
-    }, 1500);
+      setTimeout(() => {
+        setLabState("result");
+      }, 380);
+    }, 2300);
   };
 
   const handleUseClue = () => {
@@ -305,7 +307,8 @@ export default function LabScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <View
+          <Animated.View
+            entering={FadeInDown.delay(60).duration(380).springify()}
             style={[
               styles.resultCard,
               {
@@ -377,7 +380,7 @@ export default function LabScreen() {
             <Text style={[styles.explanationText, { color: colors.mutedForeground }]}>
               {activeMission.explanation}
             </Text>
-          </View>
+          </Animated.View>
 
           <View style={styles.resultActions}>
             {pendingMissions.length > 1 && (
