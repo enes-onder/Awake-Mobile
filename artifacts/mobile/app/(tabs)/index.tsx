@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Platform,
   ScrollView,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Animated, {
   FadeInDown,
+  FadeOutUp,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -41,6 +42,41 @@ function PulseDot({ color }: { color: string }) {
   }, []);
   const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
   return <Animated.View style={[animStyle, styles.pulseDot, { backgroundColor: color }]} />;
+}
+
+function StreakBonusToast({ xp, onDone }: { xp: number; onDone: () => void }) {
+  const colors = useColors();
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(-20);
+
+  useEffect(() => {
+    opacity.value = withSequence(
+      withTiming(1, { duration: 350 }),
+      withTiming(1, { duration: 2200 }),
+      withTiming(0, { duration: 500 })
+    );
+    translateY.value = withSequence(
+      withSpring(0, { damping: 14 }),
+      withTiming(0, { duration: 2200 }),
+      withTiming(-20, { duration: 500 })
+    );
+    const timer = setTimeout(onDone, 3100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.toastContainer, animStyle]}>
+      <View style={[styles.toast, { backgroundColor: "#FF6B35", shadowColor: "#FF6B35" }]}>
+        <Text style={styles.toastEmoji}>🔥</Text>
+        <Text style={styles.toastText}>Günlük Seri Bonusu! +{xp} XP</Text>
+      </View>
+    </Animated.View>
+  );
 }
 
 function StreakCard({ streak, playedToday }: { streak: number; playedToday: boolean }) {
@@ -115,6 +151,15 @@ export default function KarargahScreen() {
   const router = useRouter();
   const user = useUser();
   const { missions } = useContent();
+  const [showBonus, setShowBonus] = React.useState(false);
+  const bonusShownRef = useRef(false);
+
+  useEffect(() => {
+    if (user.streakBonusEarned > 0 && !bonusShownRef.current) {
+      bonusShownRef.current = true;
+      setShowBonus(true);
+    }
+  }, [user.streakBonusEarned]);
 
   const topPadding =
     Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
@@ -139,6 +184,12 @@ export default function KarargahScreen() {
 
   return (
     <>
+      {showBonus && (
+        <StreakBonusToast
+          xp={user.streakBonusEarned}
+          onDone={() => setShowBonus(false)}
+        />
+      )}
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{
@@ -317,6 +368,29 @@ export default function KarargahScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  toastContainer: {
+    position: "absolute",
+    top: 60,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    alignItems: "center",
+    pointerEvents: "none" as any,
+  },
+  toast: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 30,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  toastEmoji: { fontSize: 20 },
+  toastText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#fff" },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -412,23 +486,6 @@ const styles = StyleSheet.create({
   missionTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   missionCat: { fontFamily: "Inter_400Regular", fontSize: 12 },
   missionXP: { fontFamily: "Inter_700Bold", fontSize: 12 },
-  whyCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
-  },
-  whyIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  whyTitle: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 3 },
-  whyDesc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
   missionCard: {
     width: 185,
     borderRadius: 16,

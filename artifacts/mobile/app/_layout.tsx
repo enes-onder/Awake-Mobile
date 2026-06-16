@@ -53,6 +53,7 @@ function RootLayoutNav() {
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="edit-profile" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="leaderboard" options={{ animation: "slide_from_right" }} />
     </Stack>
   );
 }

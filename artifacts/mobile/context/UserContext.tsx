@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { api } from "@/lib/api";
 
 export type RankName =
   | "Çaylak"
@@ -64,6 +65,7 @@ interface UserState {
   badges: string[];
   streak: number;
   lastPlayDate: string | null;
+  lastLoginDate: string | null;
 }
 
 interface UserContextType extends UserState {
@@ -73,6 +75,7 @@ interface UserContextType extends UserState {
   accuracyRate: number;
   dailyPlayedToday: boolean;
   dailyXPMultiplier: number;
+  streakBonusEarned: number;
   earnXP: (amount: number) => void;
   completeMission: (missionId: string, correct: boolean) => void;
   completeLesson: (lessonId: string) => void;
@@ -101,9 +104,11 @@ const defaultState: UserState = {
   badges: [],
   streak: 0,
   lastPlayDate: null,
+  lastLoginDate: null,
 };
 
 const STORAGE_KEY = "@dogruluk_user_v2";
+const STREAK_BONUS_XP = 10;
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -123,20 +128,50 @@ function calcStreak(lastPlayDate: string | null, currentStreak: number): { strea
   }
 }
 
+function getRank(xp: number): Rank {
+  for (let i = RANKS.length - 1; i >= 0; i--) {
+    if (xp >= RANKS[i].minXP) return RANKS[i];
+  }
+  return RANKS[0];
+}
+
+function computeLevel(xp: number): number {
+  const rank = getRank(xp);
+  return RANKS.indexOf(rank) + 1;
+}
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<UserState>(defaultState);
   const [isLoading, setIsLoading] = useState(true);
+  const [streakBonusEarned, setStreakBonusEarned] = useState(0);
 
   useEffect(() => {
     let mounted = true;
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
       if (!mounted) return;
+
+      let loaded: UserState = defaultState;
       if (raw) {
         try {
-          const parsed = JSON.parse(raw);
-          setState({ ...defaultState, ...parsed });
+          loaded = { ...defaultState, ...JSON.parse(raw) };
         } catch {}
       }
+
+      const today = todayStr();
+      if (loaded.username && loaded.lastLoginDate !== today) {
+        const { streak, lastPlayDate } = calcStreak(loaded.lastPlayDate, loaded.streak);
+        loaded = {
+          ...loaded,
+          xp: loaded.xp + STREAK_BONUS_XP,
+          streak,
+          lastPlayDate,
+          lastLoginDate: today,
+        };
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(loaded)).catch(() => {});
+        setStreakBonusEarned(STREAK_BONUS_XP);
+      }
+
+      setState(loaded);
       setIsLoading(false);
     }).catch(() => {
       if (mounted) setIsLoading(false);
@@ -144,26 +179,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return () => { mounted = false; };
   }, []);
 
-  const save = useCallback(async (next: UserState) => {
+  const syncToDB = useCallback((s: UserState) => {
+    if (!s.username) return;
+    api.syncProfile({
+      username: s.username,
+      xp: s.xp,
+      streak: s.streak,
+      level: computeLevel(s.xp),
+      bio: s.bio,
+      favoriteTopic: s.favoriteTopic,
+    }).catch(() => {});
+  }, []);
+
+  const save = useCallback(async (next: UserState, sync = true) => {
     setState(next);
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch {}
-  }, []);
+    if (sync) syncToDB(next);
+  }, [syncToDB]);
 
   const signOut = useCallback(async () => {
     await AsyncStorage.removeItem(STORAGE_KEY);
     setState(defaultState);
+    setStreakBonusEarned(0);
   }, []);
-
-  const getRank = (xp: number): Rank => {
-    for (let i = RANKS.length - 1; i >= 0; i--) {
-      if (xp >= RANKS[i].minXP) return RANKS[i];
-    }
-    return RANKS[0];
-  };
-
-  const isAnonymous = !state.username;
 
   const rank = getRank(state.xp);
   const rankIdx = RANKS.indexOf(rank);
@@ -177,10 +217,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       : 0;
   const dailyPlayedToday = state.lastPlayDate === todayStr();
   const dailyXPMultiplier = dailyPlayedToday ? 1 : 2;
+  const isAnonymous = !state.username;
 
   const earnXP = useCallback(
     (amount: number) => {
-      save({ ...state, xp: Math.max(0, state.xp + amount) });
+      const next = { ...state, xp: Math.max(0, state.xp + amount) };
+      save(next);
     },
     [state, save]
   );
@@ -274,7 +316,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const setUsername = useCallback(
     (name: string) => {
-      save({ ...state, username: name, usernameLastChanged: new Date().toISOString() });
+      const next = { ...state, username: name, usernameLastChanged: new Date().toISOString() };
+      save(next);
     },
     [state, save]
   );
@@ -300,6 +343,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         accuracyRate,
         dailyPlayedToday,
         dailyXPMultiplier,
+        streakBonusEarned,
         earnXP,
         completeMission,
         completeLesson,

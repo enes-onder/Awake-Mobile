@@ -1,6 +1,7 @@
+import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Platform, ScrollView } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { RANKS } from "@/context/UserContext";
@@ -62,6 +63,25 @@ export default function ProfileScreen() {
 
       <StatsGrid items={statItems} startDelay={120} />
 
+      <Animated.View entering={FadeInDown.delay(200).springify()}>
+        <TouchableOpacity
+          style={[leaderboardStyles.card, { backgroundColor: colors.card, borderColor: "#FFD700" + "44" }]}
+          onPress={() => router.push("/leaderboard")}
+          activeOpacity={0.82}
+        >
+          <View style={[leaderboardStyles.iconBox, { backgroundColor: "#FFD700" + "18" }]}>
+            <Text style={leaderboardStyles.trophy}>🏆</Text>
+          </View>
+          <View style={leaderboardStyles.textBlock}>
+            <Text style={[leaderboardStyles.title, { color: colors.foreground }]}>Liderlik Tablosu</Text>
+            <Text style={[leaderboardStyles.sub, { color: colors.mutedForeground }]}>
+              Tüm oyuncular arasındaki sıralamana bak
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
+        </TouchableOpacity>
+      </Animated.View>
+
       <RankPath ranks={RANKS} userXp={user.xp} rankIdx={rankIdx} delay={260} />
 
       <CertCard xp={user.xp} delay={320} />
@@ -70,3 +90,25 @@ export default function ProfileScreen() {
     </ScrollView>
   );
 }
+
+const leaderboardStyles = StyleSheet.create({
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: 16,
+  },
+  iconBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  trophy: { fontSize: 24 },
+  textBlock: { flex: 1, gap: 3 },
+  title: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  sub: { fontFamily: "Inter_400Regular", fontSize: 12 },
+});

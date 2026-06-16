@@ -18,6 +18,7 @@ Her başarılı eylem XP (Deneyim Puanı) kazandırır. XP hiçbir zaman 0'ın a
 | Quiz sorusunu yanlış yanıtla | `−10 XP` |
 | Simülasyonda doğru seçim | `+seçeneğin xpReward değeri` |
 | Simülasyonda yanlış seçim | `0 XP` (ceza yok) |
+| **Günlük giriş streak bonusu** | `+10 XP` (her gün ilk açılışta) |
 
 ### Günlük 2× Bonus
 
@@ -100,10 +101,56 @@ function calcStreak(lastPlayDate, currentStreak) {
 
 Seri, `completeMission()` ve `completeLesson()` çağrılarında güncellenir.
 
+### Günlük Login Streak Bonusu (YENİ)
+
+Uygulama her gün ilk açıldığında (`lastLoginDate !== today`) otomatik olarak:
+- Streak `calcStreak()` mantığıyla güncellenir
+- Kullanıcıya `+10 XP` ödül verilir
+- `lastLoginDate` bugünün tarihi olarak kaydedilir
+- Ekranda parlayan bir "🔥 Günlük Seri Bonusu! +10 XP" toast bildirimi gösterilir
+
+Bu işlem `UserContext`'in `useEffect` yüklemesinde gerçekleşir; aynı gün içinde ikinci açılışta tekrarlanmaz.
+
 ### Streak Rozet Eşikleri
 
 - 3 günlük seri → `streak_3` rozeti
 - 7 günlük seri → `streak_7` rozeti
+
+---
+
+## Liderlik Tablosu (Global Leaderboard) (YENİ)
+
+### Mimari
+
+Kullanıcı profilleri PostgreSQL veritabanındaki `profiles` tablosuna senkronize edilir. Senkronizasyon şu durumlarda tetiklenir:
+
+- Kullanıcı adı ilk kez ayarlandığında (onboarding)
+- Görev tamamlandığında
+- Ders tamamlandığında
+- XP değişimlerinde
+
+Senkronizasyon `api.syncProfile()` ile `POST /api/profiles/upsert` endpointine fire-and-forget olarak yapılır.
+
+### Sıralama Kuralları
+
+- Tüm oyuncular toplam XP'ye göre **büyükten küçüğe** sıralanır
+- İlk 3 oyuncu için özel madalya gösterilir:
+  - 🥇 1. sıra: Altın
+  - 🥈 2. sıra: Gümüş
+  - 🥉 3. sıra: Bronz
+- Kullanıcının kendi satırı mavi renkle vurgulanır ve "#N (sen)" etiketi gösterilir
+- Her satırda: sıra, kullanıcı adı, rütbe etiketi, streak ve XP gösterilir
+
+### API Endpointleri
+
+| Endpoint | Metod | Açıklama |
+|---|---|---|
+| `/api/profiles/upsert` | POST | Profili oluştur veya güncelle |
+| `/api/leaderboard` | GET | XP'ye göre sıralı ilk 50 oyuncu |
+
+### Erişim
+
+Profil ekranındaki "🏆 Liderlik Tablosu" kartına basılarak `/leaderboard` rotasına yönlendirilir.
 
 ---
 
@@ -117,8 +164,6 @@ required_xp > kullanıcının XP'si → İçerik kilitli
 ```
 
 Kilitli içerikler `lockedMissionIds`, `lockedLessonIds`, `lockedSimulationIds` listelerine eklenir. UI bu listeleri kontrol ederek kilitleri gösterir.
-
-**Önemli:** Kilitli içeriklerin tam içeriği hâlâ Supabase'den çekilir — sadece oynanabilirlik engellenir, başlık ve açıklama görünür.
 
 ---
 
@@ -136,6 +181,22 @@ accuracyRate = totalAnswers > 0
 
 ## Oyun Verisinin Kaydedilmesi
 
-Tüm oyun verisi `AsyncStorage`'a `@dogruluk_user_v2` anahtarıyla JSON olarak kaydedilir. Supabase'e senkronizasyon henüz yapılmamaktadır — veri yalnızca cihazdadır.
+Tüm oyun verisi `AsyncStorage`'a `@dogruluk_user_v2` anahtarıyla JSON olarak kaydedilir.
 
-Supabase'deki `user_mission_progress`, `user_lesson_progress`, `user_simulation_progress` tabloları ilerideki bulut senkronizasyonu için hazırdır.
+Ek olarak, her XP/streak değişikliğinde kullanıcı profili `POST /api/profiles/upsert` ile veritabanına senkronize edilir. Bu sayede global leaderboard güncel kalır.
+
+### Persisted State Alanları
+
+| Alan | Açıklama |
+|---|---|
+| `username` | Kullanıcı adı |
+| `xp` | Toplam XP |
+| `streak` | Güncel seri sayısı |
+| `lastPlayDate` | Son oynama günü (streak hesabı için) |
+| `lastLoginDate` | Son giriş günü (login bonus için) |
+| `completedMissions` | Tamamlanan vaka ID listesi |
+| `completedLessons` | Tamamlanan ders ID listesi |
+| `badges` | Kazanılan rozet ID listesi |
+| `correctAnswers` | Toplam doğru cevap sayısı |
+| `totalAnswers` | Toplam cevap sayısı |
+| `fakesDetected` | Tespit edilen sahte haber sayısı |
