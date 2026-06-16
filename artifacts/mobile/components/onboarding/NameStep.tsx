@@ -4,7 +4,6 @@ import {
   Keyboard,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
 import { OnboardingLogo } from "./OnboardingLogo";
-import { styles as sharedStyles } from "./styles";
+import { styles as shared } from "./styles";
 
 interface NameStepProps {
   nameInput: string;
@@ -27,7 +26,7 @@ interface NameStepProps {
 }
 
 const FEATURES = [
-  { icon: "zap",        text: "XP Kazan" },
+  { icon: "zap",         text: "XP Kazan" },
   { icon: "trending-up", text: "Seri Kur" },
   { icon: "award",       text: "Rozet Al" },
 ] as const;
@@ -45,7 +44,7 @@ export function NameStep({
 
   return (
     <Pressable
-      style={[sharedStyles.container, { backgroundColor: colors.background }]}
+      style={[shared.container, { backgroundColor: colors.background }]}
       onPress={Keyboard.dismiss}
     >
       <ScrollView
@@ -61,9 +60,9 @@ export function NameStep({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Back button */}
+        {/* Back */}
         <TouchableOpacity
-          style={[sharedStyles.backBtn, { backgroundColor: colors.card }]}
+          style={[shared.backBtn, { backgroundColor: colors.card }]}
           onPress={onBack}
         >
           <Feather name="arrow-left" size={18} color={colors.foreground} />
@@ -72,33 +71,33 @@ export function NameStep({
         {/* Logo */}
         <Animated.View
           entering={FadeInUp.springify()}
-          style={{ alignItems: "center", marginTop: 44, marginBottom: 16 }}
+          style={{ alignItems: "center", marginTop: 44, marginBottom: 20 }}
         >
           <OnboardingLogo delay={80} />
         </Animated.View>
 
         {/* Title */}
         <Animated.View
-          entering={FadeInDown.delay(160).springify()}
-          style={[sharedStyles.titleBlock, { marginBottom: 24 }]}
+          entering={FadeInDown.delay(150).springify()}
+          style={[shared.titleBlock, { marginBottom: 28 }]}
         >
-          <Text style={[sharedStyles.appName, { color: colors.foreground }]}>
+          <Text style={[shared.appName, { color: colors.foreground }]}>
             Kod adını seç, Ajan
           </Text>
-          <Text style={[sharedStyles.appTagline, { color: colors.mutedForeground }]}>
-            Bu isim misyonlarında seni temsil edecek.{"\n"}Değiştirmek istersen profilinden yapabilirsin.
+          <Text style={[shared.appTagline, { color: colors.mutedForeground }]}>
+            Bu isim misyonlarında seni temsil edecek.{"\n"}Dilediğin zaman profilinden değiştirebilirsin.
           </Text>
         </Animated.View>
 
         {/* Name input */}
         <Animated.View
-          entering={FadeInDown.delay(240).springify()}
-          style={[sharedStyles.nameInputArea]}
+          entering={FadeInDown.delay(220).springify()}
+          style={shared.nameInputArea}
         >
           <TextInput
             ref={nameInputRef}
             style={[
-              sharedStyles.nameInput,
+              shared.nameInput,
               {
                 color: colors.foreground,
                 borderColor: canStart ? colors.primary : colors.border,
@@ -115,23 +114,23 @@ export function NameStep({
             returnKeyType="go"
           />
           {nameInput.length > 0 && (
-            <Text style={[sharedStyles.charCount, { color: colors.mutedForeground }]}>
+            <Text style={[shared.charCount, { color: colors.mutedForeground }]}>
               {nameInput.length}/18
             </Text>
           )}
         </Animated.View>
 
-        {/* Anonymous start */}
+        {/* Start button */}
         <Animated.View
-          entering={FadeInDown.delay(300).springify()}
-          style={{ width: "100%", marginTop: 14 }}
+          entering={FadeInDown.delay(290).springify()}
+          style={{ width: "100%", marginTop: 16 }}
         >
           <TouchableOpacity
             style={[
-              sharedStyles.startBtn,
+              shared.startBtn,
               {
                 backgroundColor: canStart ? colors.primary : colors.card,
-                opacity: canStart ? 1 : 0.55,
+                opacity: canStart ? 1 : 0.45,
               },
             ]}
             onPress={handleStart}
@@ -139,55 +138,23 @@ export function NameStep({
             activeOpacity={0.85}
           >
             <Feather name="shield" size={20} color="#fff" />
-            <Text style={sharedStyles.startBtnText}>Hızlı Giriş</Text>
+            <Text style={shared.startBtnText}>Göreve Başla</Text>
           </TouchableOpacity>
-        </Animated.View>
-
-        {/* Divider */}
-        <Animated.View
-          entering={FadeInDown.delay(360).springify()}
-          style={nameStepStyles.dividerRow}
-        >
-          <View style={[nameStepStyles.dividerLine, { backgroundColor: colors.border }]} />
-          <Text style={[nameStepStyles.dividerText, { color: colors.mutedForeground }]}>
-            veya
-          </Text>
-          <View style={[nameStepStyles.dividerLine, { backgroundColor: colors.border }]} />
-        </Animated.View>
-
-        {/* Google mock button */}
-        <Animated.View entering={FadeInDown.delay(400).springify()}>
-          <MockSocialButton
-            label="Google ile Giriş Yap"
-            icon="globe"
-            accentColor="#EA4335"
-            colors={colors}
-          />
-        </Animated.View>
-
-        {/* Apple mock button */}
-        <Animated.View entering={FadeInDown.delay(450).springify()} style={{ marginTop: 10 }}>
-          <MockSocialButton
-            label="Apple ile Giriş Yap"
-            icon="smartphone"
-            accentColor="#AAAAAA"
-            colors={colors}
-          />
         </Animated.View>
 
         {/* Feature tags */}
         <Animated.View
-          entering={FadeInDown.delay(520).springify()}
+          entering={FadeInDown.delay(360).springify()}
           style={{ marginTop: 20 }}
         >
-          <View style={sharedStyles.featureRow}>
+          <View style={shared.featureRow}>
             {FEATURES.map((f) => (
               <View
                 key={f.text}
-                style={[sharedStyles.featureTag, { backgroundColor: colors.card }]}
+                style={[shared.featureTag, { backgroundColor: colors.card }]}
               >
                 <Feather name={f.icon as any} size={13} color={colors.warning} />
-                <Text style={[sharedStyles.featureTagText, { color: colors.mutedForeground }]}>
+                <Text style={[shared.featureTagText, { color: colors.mutedForeground }]}>
                   {f.text}
                 </Text>
               </View>
@@ -198,84 +165,3 @@ export function NameStep({
     </Pressable>
   );
 }
-
-interface MockSocialButtonProps {
-  label: string;
-  icon: string;
-  accentColor: string;
-  colors: ReturnType<typeof import("@/hooks/useColors").useColors>;
-}
-
-function MockSocialButton({ label, icon, accentColor, colors }: MockSocialButtonProps) {
-  return (
-    <TouchableOpacity
-      style={[
-        nameStepStyles.socialBtn,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-          opacity: 0.55,
-        },
-      ]}
-      activeOpacity={0.7}
-      disabled
-    >
-      <View style={[nameStepStyles.socialIcon, { backgroundColor: accentColor + "18" }]}>
-        <Feather name={icon as any} size={18} color={accentColor} />
-      </View>
-      <Text style={[nameStepStyles.socialLabel, { color: colors.foreground }]}>
-        {label}
-      </Text>
-      <View style={[nameStepStyles.soonBadge, { backgroundColor: colors.warning + "22" }]}>
-        <Text style={[nameStepStyles.soonText, { color: colors.warning }]}>Yakında</Text>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-const nameStepStyles = StyleSheet.create({
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginVertical: 18,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-  },
-  socialBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 16,
-    borderWidth: 1.5,
-  },
-  socialIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  socialLabel: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    flex: 1,
-  },
-  soonBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  soonText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
-  },
-});
