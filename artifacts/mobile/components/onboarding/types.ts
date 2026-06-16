@@ -1,4 +1,4 @@
-export type Step = "auth" | "email" | "phone" | "otp" | "name";
+export type Step = "intro" | "auth" | "email" | "phone" | "otp" | "name";
 export type AuthProvider = "google" | "apple" | "email" | "phone";
 
 export interface ProviderItem {

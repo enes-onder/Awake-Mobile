@@ -20,10 +20,15 @@ interface SwipeCardProps {
 
 export function SwipeCard({ mission, clueIndex, onVerdictSelected, onUseClue }: SwipeCardProps) {
   const colors = useColors();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+
   const _scale = Math.min(Math.max(width / 390, 0.9), 1.2);
   const fs = (base: number) => Math.round(base * _scale);
   const sp = (base: number) => Math.round(base * Math.min(_scale, 1.1));
+
+  // Card must never overflow the available vertical space
+  // Reserve ~220px for the header area + buttons below the card
+  const cardMaxHeight = height * 0.58;
 
   const {
     pan,
@@ -50,6 +55,8 @@ export function SwipeCard({ mission, clueIndex, onVerdictSelected, onUseClue }: 
           {
             backgroundColor: colors.card,
             borderColor: colors.border,
+            maxHeight: cardMaxHeight,
+            overflow: "hidden",
             transform: [{ translateX: pan.x }, { translateY: pan.y }, { rotate }],
           },
         ]}

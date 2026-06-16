@@ -23,16 +23,16 @@ export function CelebrationOverlay({
   subMessage,
 }: CelebrationOverlayProps) {
   const insets = useSafeAreaInsets();
-  const translateY = useSharedValue(-100);
+  const translateY = useSharedValue(-120);
   const opacity = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
-      translateY.value = withSpring(0, { damping: 14, stiffness: 180 });
-      opacity.value = withTiming(1, { duration: 200 });
+      translateY.value = withSpring(0, { damping: 16, stiffness: 200 });
+      opacity.value = withTiming(1, { duration: 180 });
     } else {
-      translateY.value = withTiming(-100, { duration: 250 });
-      opacity.value = withTiming(0, { duration: 250 });
+      translateY.value = withTiming(-120, { duration: 220 });
+      opacity.value = withTiming(0, { duration: 220 });
     }
   }, [visible]);
 
@@ -44,28 +44,15 @@ export function CelebrationOverlay({
   const color = isCorrect ? "#00C851" : "#FF3B30";
   const bg = isCorrect ? "rgba(0,200,81,0.18)" : "rgba(255,59,48,0.18)";
 
-  const topPad =
-    Platform.OS === "web"
-      ? Math.max(insets.top, 67) + 16
-      : insets.top + 20;
+  // Always ensure toast is well below the notch/status-bar
+  const topPad = Platform.OS === "web"
+    ? Math.max(insets.top, 67) + 16
+    : Math.max(insets.top, 48) + 14;
 
   return (
-    <View
-      style={[styles.overlay, { pointerEvents: "none" }]}
-    >
-      <Animated.View
-        style={[
-          styles.toastWrapper,
-          { paddingTop: topPad },
-          animStyle,
-        ]}
-      >
-        <View
-          style={[
-            styles.toast,
-            { backgroundColor: bg, borderColor: color + "88" },
-          ]}
-        >
+    <View style={[styles.overlay, { pointerEvents: "none" }]}>
+      <Animated.View style={[styles.toastWrapper, { paddingTop: topPad }, animStyle]}>
+        <View style={[styles.toast, { backgroundColor: bg, borderColor: color + "99" }]}>
           <Feather
             name={isCorrect ? "check-circle" : "x-circle"}
             size={22}
@@ -93,6 +80,7 @@ const styles = StyleSheet.create({
   toastWrapper: {
     alignItems: "center",
     width: "100%",
+    paddingHorizontal: 20,
   },
   toast: {
     flexDirection: "row",
@@ -103,20 +91,19 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1.5,
     maxWidth: 340,
+    width: "100%",
     ...Platform.select({
-      web: { boxShadow: "0 4px 20px rgba(0,0,0,0.4)" } as any,
+      web: { boxShadow: "0 4px 20px rgba(0,0,0,0.45)" } as any,
       default: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-        elevation: 8,
+        shadowOpacity: 0.35,
+        shadowRadius: 14,
+        elevation: 10,
       },
     }),
   },
-  textGroup: {
-    gap: 3,
-  },
+  textGroup: { gap: 3, flex: 1 },
   message: {
     fontFamily: "Inter_700Bold",
     fontSize: 15,

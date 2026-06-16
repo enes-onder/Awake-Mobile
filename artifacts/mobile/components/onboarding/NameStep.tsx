@@ -14,9 +14,8 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
-import type { AuthProvider, ProviderItem } from "./types";
 import { OnboardingLogo } from "./OnboardingLogo";
-import { styles } from "./styles";
+import { styles as sharedStyles } from "./styles";
 
 interface NameStepProps {
   nameInput: string;
@@ -24,21 +23,13 @@ interface NameStepProps {
   nameInputRef: React.RefObject<TextInput | null>;
   canStart: boolean;
   handleStart: () => void;
-  selectedProvider: AuthProvider | null;
-  providerMap: ProviderItem[];
   onBack: () => void;
 }
 
 const FEATURES = [
-  { icon: "zap", text: "XP Kazan" },
+  { icon: "zap",        text: "XP Kazan" },
   { icon: "trending-up", text: "Seri Kur" },
-  { icon: "award", text: "Rozet Al" },
-] as const;
-
-const WHY_ITEMS = [
-  { icon: "shield", color: "#3B82F6", title: "Gerçek Beceri Öğren", desc: "Tersine görsel arama, metadata analizi — hayatta kullanacağın teknikler" },
-  { icon: "trending-up", color: "#00C851", title: "Her Gün İlerle", desc: "Seri sistemi ile her gün oynayarak rütbe kazan, sertifika al" },
-  { icon: "zap", color: "#FF9500", title: "Haber Kandırmacasına Dur De", desc: "Akıllı olduğunu kanıtla — sahte haberler seni artık kandıramaz" },
+  { icon: "award",       text: "Rozet Al" },
 ] as const;
 
 export function NameStep({
@@ -47,24 +38,20 @@ export function NameStep({
   nameInputRef,
   canStart,
   handleStart,
-  selectedProvider,
-  providerMap,
   onBack,
 }: NameStepProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  const provider = providerMap.find((p) => p.id === selectedProvider);
-
   return (
     <Pressable
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[sharedStyles.container, { backgroundColor: colors.background }]}
       onPress={Keyboard.dismiss}
     >
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingTop: insets.top + 20,
+          paddingTop: insets.top + 16,
           paddingBottom: insets.bottom + 28,
           paddingHorizontal: 24,
           maxWidth: 430,
@@ -74,62 +61,44 @@ export function NameStep({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Back button */}
         <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: colors.card }]}
+          style={[sharedStyles.backBtn, { backgroundColor: colors.card }]}
           onPress={onBack}
         >
           <Feather name="arrow-left" size={18} color={colors.foreground} />
         </TouchableOpacity>
 
-        <Animated.View entering={FadeInUp.springify()} style={{ alignItems: "center", marginTop: 44, marginBottom: 20 }}>
-          <OnboardingLogo delay={100} />
+        {/* Logo */}
+        <Animated.View
+          entering={FadeInUp.springify()}
+          style={{ alignItems: "center", marginTop: 44, marginBottom: 16 }}
+        >
+          <OnboardingLogo delay={80} />
         </Animated.View>
 
-        {provider && (
-          <Animated.View
-            entering={FadeInDown.delay(150).springify()}
-            style={[styles.providerBadge, { backgroundColor: provider.color + "18", borderColor: provider.color + "44", alignSelf: "center", marginBottom: 16 }]}
-          >
-            <Feather name={provider.icon as any} size={14} color={provider.color} />
-            <Text style={[styles.providerBadgeText, { color: provider.color }]}>
-              {provider.label
-                .replace("ile Giriş Yap", "")
-                .replace("ile Kayıt Ol", "")
-                .replace("ile Devam Et", "")
-                .trim()}
-            </Text>
-          </Animated.View>
-        )}
-
-        <Animated.View entering={FadeInDown.delay(200).springify()} style={[styles.titleBlock, { marginBottom: 20 }]}>
-          <Text style={[styles.appName, { color: colors.foreground }]}>
+        {/* Title */}
+        <Animated.View
+          entering={FadeInDown.delay(160).springify()}
+          style={[sharedStyles.titleBlock, { marginBottom: 24 }]}
+        >
+          <Text style={[sharedStyles.appName, { color: colors.foreground }]}>
             Kod adını seç, Ajan
           </Text>
-          <Text style={[styles.appTagline, { color: colors.mutedForeground }]}>
+          <Text style={[sharedStyles.appTagline, { color: colors.mutedForeground }]}>
             Bu isim misyonlarında seni temsil edecek.{"\n"}Değiştirmek istersen profilinden yapabilirsin.
           </Text>
         </Animated.View>
 
-        {/* Why cards */}
-        <Animated.View entering={FadeInDown.delay(270).springify()} style={nameStepStyles.whySection}>
-          {WHY_ITEMS.map((item, i) => (
-            <View key={item.title} style={[nameStepStyles.whyCard, { backgroundColor: colors.card, borderColor: item.color + "33" }]}>
-              <View style={[nameStepStyles.whyIcon, { backgroundColor: item.color + "18" }]}>
-                <Feather name={item.icon as any} size={18} color={item.color} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[nameStepStyles.whyTitle, { color: colors.foreground }]}>{item.title}</Text>
-                <Text style={[nameStepStyles.whyDesc, { color: colors.mutedForeground }]}>{item.desc}</Text>
-              </View>
-            </View>
-          ))}
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(380).springify()} style={[styles.nameInputArea, { marginTop: 20 }]}>
+        {/* Name input */}
+        <Animated.View
+          entering={FadeInDown.delay(240).springify()}
+          style={[sharedStyles.nameInputArea]}
+        >
           <TextInput
             ref={nameInputRef}
             style={[
-              styles.nameInput,
+              sharedStyles.nameInput,
               {
                 color: colors.foreground,
                 borderColor: canStart ? colors.primary : colors.border,
@@ -146,19 +115,23 @@ export function NameStep({
             returnKeyType="go"
           />
           {nameInput.length > 0 && (
-            <Text style={[styles.charCount, { color: colors.mutedForeground }]}>
+            <Text style={[sharedStyles.charCount, { color: colors.mutedForeground }]}>
               {nameInput.length}/18
             </Text>
           )}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(440).springify()} style={{ width: "100%", marginTop: 14 }}>
+        {/* Anonymous start */}
+        <Animated.View
+          entering={FadeInDown.delay(300).springify()}
+          style={{ width: "100%", marginTop: 14 }}
+        >
           <TouchableOpacity
             style={[
-              styles.startBtn,
+              sharedStyles.startBtn,
               {
                 backgroundColor: canStart ? colors.primary : colors.card,
-                opacity: canStart ? 1 : 0.6,
+                opacity: canStart ? 1 : 0.55,
               },
             ]}
             onPress={handleStart}
@@ -166,16 +139,55 @@ export function NameStep({
             activeOpacity={0.85}
           >
             <Feather name="shield" size={20} color="#fff" />
-            <Text style={styles.startBtnText}>Göreve Başla</Text>
+            <Text style={sharedStyles.startBtnText}>Hızlı Giriş</Text>
           </TouchableOpacity>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(500).springify()} style={{ marginTop: 16 }}>
-          <View style={styles.featureRow}>
+        {/* Divider */}
+        <Animated.View
+          entering={FadeInDown.delay(360).springify()}
+          style={nameStepStyles.dividerRow}
+        >
+          <View style={[nameStepStyles.dividerLine, { backgroundColor: colors.border }]} />
+          <Text style={[nameStepStyles.dividerText, { color: colors.mutedForeground }]}>
+            veya
+          </Text>
+          <View style={[nameStepStyles.dividerLine, { backgroundColor: colors.border }]} />
+        </Animated.View>
+
+        {/* Google mock button */}
+        <Animated.View entering={FadeInDown.delay(400).springify()}>
+          <MockSocialButton
+            label="Google ile Giriş Yap"
+            icon="globe"
+            accentColor="#EA4335"
+            colors={colors}
+          />
+        </Animated.View>
+
+        {/* Apple mock button */}
+        <Animated.View entering={FadeInDown.delay(450).springify()} style={{ marginTop: 10 }}>
+          <MockSocialButton
+            label="Apple ile Giriş Yap"
+            icon="smartphone"
+            accentColor="#AAAAAA"
+            colors={colors}
+          />
+        </Animated.View>
+
+        {/* Feature tags */}
+        <Animated.View
+          entering={FadeInDown.delay(520).springify()}
+          style={{ marginTop: 20 }}
+        >
+          <View style={sharedStyles.featureRow}>
             {FEATURES.map((f) => (
-              <View key={f.text} style={[styles.featureTag, { backgroundColor: colors.card }]}>
+              <View
+                key={f.text}
+                style={[sharedStyles.featureTag, { backgroundColor: colors.card }]}
+              >
                 <Feather name={f.icon as any} size={13} color={colors.warning} />
-                <Text style={[styles.featureTagText, { color: colors.mutedForeground }]}>
+                <Text style={[sharedStyles.featureTagText, { color: colors.mutedForeground }]}>
                   {f.text}
                 </Text>
               </View>
@@ -187,24 +199,83 @@ export function NameStep({
   );
 }
 
+interface MockSocialButtonProps {
+  label: string;
+  icon: string;
+  accentColor: string;
+  colors: ReturnType<typeof import("@/hooks/useColors").useColors>;
+}
+
+function MockSocialButton({ label, icon, accentColor, colors }: MockSocialButtonProps) {
+  return (
+    <TouchableOpacity
+      style={[
+        nameStepStyles.socialBtn,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          opacity: 0.55,
+        },
+      ]}
+      activeOpacity={0.7}
+      disabled
+    >
+      <View style={[nameStepStyles.socialIcon, { backgroundColor: accentColor + "18" }]}>
+        <Feather name={icon as any} size={18} color={accentColor} />
+      </View>
+      <Text style={[nameStepStyles.socialLabel, { color: colors.foreground }]}>
+        {label}
+      </Text>
+      <View style={[nameStepStyles.soonBadge, { backgroundColor: colors.warning + "22" }]}>
+        <Text style={[nameStepStyles.soonText, { color: colors.warning }]}>Yakında</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 const nameStepStyles = StyleSheet.create({
-  whySection: { gap: 8 },
-  whyCard: {
+  dividerRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 13,
+    marginVertical: 18,
   },
-  whyIcon: {
-    width: 38,
-    height: 38,
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+  },
+  socialBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1.5,
+  },
+  socialIcon: {
+    width: 36,
+    height: 36,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    flexShrink: 0,
   },
-  whyTitle: { fontFamily: "Inter_700Bold", fontSize: 13, marginBottom: 2 },
-  whyDesc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  socialLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    flex: 1,
+  },
+  soonBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  soonText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+  },
 });
