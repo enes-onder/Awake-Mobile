@@ -310,31 +310,6 @@ export default function KarargahScreen() {
           </ScrollView>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(360).springify()}>
-          <View style={styles.sectionHeader}>
-            <PulseDot color={colors.success} />
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Neden Bu Uygulama?</Text>
-          </View>
-          <View style={{ gap: 8 }}>
-            {[
-              { icon: "shield", color: colors.primary, title: "Gerçek Beceri Öğren", desc: "Tersine görsel arama, metadata analizi — hayatta kullanacağın teknikler" },
-              { icon: "trending-up", color: colors.success, title: "Her Gün İlerle", desc: "Seri sistemi ile her gün oynayarak rütbe kazan, sertifika al" },
-              { icon: "zap", color: colors.warning, title: "Haber Kandırmacasına Dur De", desc: "Akıllı olduğunu kanıtla — sahte haberler seni artık kandıramaz" },
-            ].map((item, i) => (
-              <Animated.View key={item.title} entering={FadeInDown.delay(380 + i * 50).springify()}>
-                <View style={[styles.whyCard, { backgroundColor: colors.card, borderColor: item.color + "33" }]}>
-                  <View style={[styles.whyIcon, { backgroundColor: item.color + "18" }]}>
-                    <Feather name={item.icon as any} size={20} color={item.color} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.whyTitle, { color: colors.foreground }]}>{item.title}</Text>
-                    <Text style={[styles.whyDesc, { color: colors.mutedForeground }]}>{item.desc}</Text>
-                  </View>
-                </View>
-              </Animated.View>
-            ))}
-          </View>
-        </Animated.View>
       </ScrollView>
     </>
   );

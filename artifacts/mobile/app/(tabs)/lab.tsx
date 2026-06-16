@@ -296,11 +296,9 @@ export default function LabScreen() {
       <View style={[styles.resultPage, { backgroundColor: colors.background }]}>
         <ScrollView
           contentContainerStyle={{
-            flexGrow: 1,
             paddingTop: topPadding + 16,
-            paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 90,
+            paddingBottom: 24,
             paddingHorizontal: r.hp,
-            gap: 12,
             maxWidth: r.maxW,
             alignSelf: "center",
             width: "100%",
@@ -325,7 +323,7 @@ export default function LabScreen() {
             >
               <Feather
                 name={lastCorrect ? "check-circle" : "x-circle"}
-                size={36}
+                size={40}
                 color={lastCorrect ? colors.success : colors.fake}
               />
             </View>
@@ -344,13 +342,13 @@ export default function LabScreen() {
                 },
               ]}
             >
-              <Feather name="zap" size={16} color={lastXP >= 0 ? colors.warning : colors.fake} />
+              <Feather name="zap" size={18} color={lastXP >= 0 ? colors.warning : colors.fake} />
               <View>
                 <Text style={[styles.xpEarnedText, { color: lastXP >= 0 ? colors.warning : colors.fake }]}>
                   {lastXP >= 0 ? `+${lastXP} XP kazandın` : `${lastXP} XP kaybettin`}
                 </Text>
                 {lastXP >= 0 && lastMultiplier > 1 && (
-                  <Text style={{ color: colors.warning, fontFamily: "Inter_400Regular", fontSize: 10, opacity: 0.8 }}>
+                  <Text style={{ color: colors.warning, fontFamily: "Inter_400Regular", fontSize: 11, opacity: 0.8 }}>
                     Günlük 2× bonus dahil!
                   </Text>
                 )}
@@ -381,8 +379,22 @@ export default function LabScreen() {
               {activeMission.explanation}
             </Text>
           </Animated.View>
+        </ScrollView>
 
-          <View style={styles.resultActions}>
+        {/* Buttons anchored to bottom */}
+        <Animated.View
+          entering={FadeInDown.delay(200).duration(320).springify()}
+          style={[
+            styles.resultActionBar,
+            {
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
+              paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 16,
+              paddingHorizontal: r.hp,
+            },
+          ]}
+        >
+          <View style={{ maxWidth: r.maxW, alignSelf: "center", width: "100%", gap: 10 }}>
             {pendingMissions.length > 1 && (
               <TouchableOpacity
                 style={[styles.nextBtn, { backgroundColor: colors.primary }]}
@@ -403,7 +415,7 @@ export default function LabScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </Animated.View>
       </View>
     );
   }
@@ -917,6 +929,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   resultActions: { gap: 10, marginTop: 4 },
+  resultActionBar: {
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
   nextBtn: {
     flexDirection: "row",
     alignItems: "center",
