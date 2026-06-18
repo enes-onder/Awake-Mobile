@@ -23,7 +23,7 @@ export function CelebrationOverlay({
   subMessage,
 }: CelebrationOverlayProps) {
   const insets = useSafeAreaInsets();
-  const translateY = useSharedValue(-120);
+  const translateY = useSharedValue(-140);
   const opacity = useSharedValue(0);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function CelebrationOverlay({
       translateY.value = withSpring(0, { damping: 16, stiffness: 200 });
       opacity.value = withTiming(1, { duration: 180 });
     } else {
-      translateY.value = withTiming(-120, { duration: 220 });
+      translateY.value = withTiming(-140, { duration: 220 });
       opacity.value = withTiming(0, { duration: 220 });
     }
   }, [visible]);
@@ -44,10 +44,10 @@ export function CelebrationOverlay({
   const color = isCorrect ? "#00C851" : "#FF3B30";
   const bg = isCorrect ? "rgba(0,200,81,0.18)" : "rgba(255,59,48,0.18)";
 
-  // Always ensure toast is well below the notch/status-bar
+  // Ensure toast always clears the notch/status-bar with generous margin
   const topPad = Platform.OS === "web"
-    ? Math.max(insets.top, 67) + 16
-    : Math.max(insets.top, 48) + 14;
+    ? Math.max(insets.top, 67) + 20
+    : Math.max(insets.top, 56) + 20;
 
   return (
     <View style={[styles.overlay, { pointerEvents: "none" }]}>

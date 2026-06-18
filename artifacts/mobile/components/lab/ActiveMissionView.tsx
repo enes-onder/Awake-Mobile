@@ -47,14 +47,20 @@ export function ActiveMissionView({
   const colors = useColors();
   const r = useResponsive();
 
+  const safeBottom = Platform.OS === "web" ? 100 : Math.max(bottomInset, 8) + 12;
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Fixed header */}
       <View
         style={{
           paddingTop: topPadding + 14,
           paddingHorizontal: r.hp,
           paddingBottom: 10,
           gap: 10,
+          maxWidth: r.maxW,
+          alignSelf: "center",
+          width: "100%",
         }}
       >
         <Animated.View entering={FadeInDown.springify()} style={styles.activeHeader}>
@@ -98,15 +104,16 @@ export function ActiveMissionView({
         </Animated.View>
       </View>
 
+      {/* Card area — fills remaining space, card is center-aligned */}
       <View
         style={{
           flex: 1,
           paddingHorizontal: r.hp,
-          justifyContent: "center",
-          paddingBottom: Platform.OS === "web" ? 100 : bottomInset + 16,
+          paddingBottom: safeBottom,
           maxWidth: r.maxW,
           alignSelf: "center",
           width: "100%",
+          justifyContent: "center",
         }}
       >
         <Animated.View entering={FadeInDown.delay(120).springify()}>
@@ -123,7 +130,7 @@ export function ActiveMissionView({
       <CelebrationOverlay
         visible={celebVisible}
         isCorrect={celebCorrect}
-        message={celebCorrect ? "Doğru Tespit!" : "Yanış Tahmin"}
+        message={celebCorrect ? "Doğru Tespit!" : "Yanlış Tahmin"}
         subMessage={
           celebCorrect ? "Harika iş, ajan!" : "Dezenformasyon bu sefer kazandı"
         }

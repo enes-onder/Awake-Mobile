@@ -26,9 +26,10 @@ export function SwipeCard({ mission, clueIndex, onVerdictSelected, onUseClue }: 
   const fs = (base: number) => Math.round(base * _scale);
   const sp = (base: number) => Math.round(base * Math.min(_scale, 1.1));
 
-  // Card must never overflow the available vertical space
-  // Reserve ~220px for the header area + buttons below the card
-  const cardMaxHeight = height * 0.58;
+  // Reserve space for header (~160px) + verdict buttons (~120px) + gaps
+  // Use a percentage that works across screen sizes (SE to Pro Max)
+  const reservedPx = height >= 812 ? 290 : 260;
+  const cardMaxHeight = Math.min(height - reservedPx, height * 0.52);
 
   const {
     pan,
@@ -55,7 +56,7 @@ export function SwipeCard({ mission, clueIndex, onVerdictSelected, onUseClue }: 
           {
             backgroundColor: colors.card,
             borderColor: colors.border,
-            maxHeight: cardMaxHeight,
+            maxHeight: Math.max(cardMaxHeight, 240),
             overflow: "hidden",
             transform: [{ translateX: pan.x }, { translateY: pan.y }, { rotate }],
           },
