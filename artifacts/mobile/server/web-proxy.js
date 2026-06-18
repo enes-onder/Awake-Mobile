@@ -1,17 +1,21 @@
 const http = require('http');
 const net = require('net');
 
-const TARGET_PORT = 18115;
+const METRO_PORT = 18115;
+const API_PORT = 3001;
 const PROXY_PORT = 5000;
 const WARMUP_DELAY_MS = 15000;
 
 function proxyRequest(req, res) {
+  const isApiRequest = req.url.startsWith('/api/') || req.url === '/api';
+  const targetPort = isApiRequest ? API_PORT : METRO_PORT;
+
   const options = {
     hostname: 'localhost',
-    port: TARGET_PORT,
+    port: targetPort,
     path: req.url,
     method: req.method,
-    headers: { ...req.headers, host: `localhost:${TARGET_PORT}` },
+    headers: { ...req.headers, host: `localhost:${targetPort}` },
   };
 
   const proxyReq = http.request(options, (proxyRes) => {
@@ -21,7 +25,7 @@ function proxyRequest(req, res) {
 
   proxyReq.on('error', (err) => {
     res.writeHead(502);
-    res.end('Metro not ready: ' + err.message);
+    res.end((isApiRequest ? 'API' : 'Metro') + ' not ready: ' + err.message);
   });
 
   req.pipe(proxyReq, { end: true });
@@ -30,10 +34,10 @@ function proxyRequest(req, res) {
 const server = http.createServer(proxyRequest);
 
 server.on('upgrade', (req, socket, head) => {
-  const target = net.createConnection(TARGET_PORT, 'localhost', () => {
+  const target = net.createConnection(METRO_PORT, 'localhost', () => {
     target.write(
       `${req.method} ${req.url} HTTP/1.1\r\n` +
-      `Host: localhost:${TARGET_PORT}\r\n` +
+      `Host: localhost:${METRO_PORT}\r\n` +
       Object.entries(req.headers)
         .filter(([k]) => k !== 'host')
         .map(([k, v]) => `${k}: ${v}`)
@@ -50,7 +54,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 server.listen(PROXY_PORT, () => {
-  console.log(`Web proxy: localhost:${PROXY_PORT} → localhost:${TARGET_PORT}`);
+  console.log(`Web proxy: localhost:${PROXY_PORT} → /api/* → :${API_PORT}, rest → :${METRO_PORT}`);
 });
 
 function warmupBundle(platform) {
@@ -58,7 +62,7 @@ function warmupBundle(platform) {
     const manifestReq = http.request(
       {
         hostname: 'localhost',
-        port: TARGET_PORT,
+        port: METRO_PORT,
         path: '/',
         method: 'GET',
         headers: {
@@ -75,7 +79,7 @@ function warmupBundle(platform) {
             const manifest = JSON.parse(data);
             const bundleUrl = manifest?.launchAsset?.url?.replace(
               /https?:\/\/[^/]+/,
-              `http://localhost:${TARGET_PORT}`
+              `http://localhost:${METRO_PORT}`
             );
             if (!bundleUrl) return resolve();
             console.log(`Warming ${platform} bundle...`);
@@ -101,7 +105,7 @@ function warmupBundle(platform) {
 }
 
 setTimeout(async () => {
-  console.log(`Metro ready — pre-warming bundles (this prevents 502 on first Expo Go scan)...`);
+  console.log(`Metro ready — pre-warming bundles...`);
   await Promise.all([warmupBundle('ios'), warmupBundle('android')]);
   console.log('Bundles warmed — safe to scan QR code');
 }, WARMUP_DELAY_MS);
