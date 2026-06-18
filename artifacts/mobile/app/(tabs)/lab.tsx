@@ -1,3 +1,16 @@
+/**
+ * (tabs)/lab.tsx — Haber Lab ekranı.
+ *
+ * Kullanıcının gerçek/sahte haber analizi yapabileceği interaktif oyun alanı.
+ * İki ana sekme:
+ *  - "vakalar"   → Vaka Analizi: haber parçacıklarını gerçek/sahte olarak etiketleme
+ *  - "simulasyon" → Simülasyon: senaryo tabanlı karar ağacı alıştırmaları
+ *
+ * Akış yönetimi useLabState hook'u tarafından yapılır.
+ * Aktif simülasyon varsa SimulationPlayer tam ekran gösterilir.
+ * Aktif vaka "active" aşamasındaysa ActiveMissionView, "result" aşamasındaysa MissionResultView.
+ */
+
 import React from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -17,6 +30,7 @@ export default function LabScreen() {
   const colors = useColors();
   const lab = useLabState();
 
+  /** Simülasyon oynanıyorsa tam ekran SimulationPlayer göster */
   if (lab.activeSim && lab.activeSim_data) {
     return (
       <View style={{ flex: 1 }}>
@@ -34,6 +48,7 @@ export default function LabScreen() {
     );
   }
 
+  /** Vaka aktif aşamasındaysa vaka oynatıcı bileşenini göster */
   if (lab.labState === "active" && lab.activeMission) {
     return (
       <ActiveMissionView
@@ -55,6 +70,7 @@ export default function LabScreen() {
     );
   }
 
+  /** Karar verildi, sonuç bekleniyor — sonuç özet ekranını göster */
   if (lab.labState === "result" && lab.activeMission) {
     return (
       <MissionResultView
@@ -71,6 +87,7 @@ export default function LabScreen() {
     );
   }
 
+  /** Varsayılan: vaka/simülasyon liste ekranı */
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -81,6 +98,7 @@ export default function LabScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Ekran başlığı */}
         <Animated.View
           entering={FadeInDown.delay(0).springify()}
           style={styles.listHeader}
@@ -93,6 +111,7 @@ export default function LabScreen() {
           </Text>
         </Animated.View>
 
+        {/* Sekme geçiş butonları */}
         <Animated.View
           entering={FadeInDown.delay(80).springify()}
           style={styles.tabsRow}

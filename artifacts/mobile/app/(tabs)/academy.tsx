@@ -1,3 +1,17 @@
+/**
+ * (tabs)/academy.tsx — Akademi ekranı.
+ *
+ * İki sekme içerir:
+ *  - "lessons" → Ders listesi: okuma metni + quiz
+ *  - "badges"  → Rozet koleksiyonu
+ *
+ * Ders oynatıcısı (LessonPlayer) aktifken tam ekran gösterilir.
+ * Dersler sıralıdır; bir sonraki ders önceki tamamlanmadan kilitli kalır.
+ *
+ * LessonPlayer akışı: content (paragraflar) → quiz (sorular) → done (özet)
+ * Quiz: doğru cevap +10 XP bonus, yanlış cevap -10 XP düşürür.
+ */
+
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useState } from "react";
@@ -25,6 +39,12 @@ import { type Lesson } from "@/data/lessons";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
 
+// ─── Alt Bileşenler ────────────────────────────────────────────────────────
+
+/**
+ * Ders/Quiz ilerleme çubuğu.
+ * current/total oranını 400ms animasyonla doldurur.
+ */
 function ProgressBar({ current, total, color }: { current: number; total: number; color: string }) {
   const progress = useSharedValue(0);
   const colors = useColors();
@@ -44,6 +64,10 @@ function ProgressBar({ current, total, color }: { current: number; total: number
   );
 }
 
+/**
+ * Quiz cevap seçeneği.
+ * showResult=true olduğunda doğru cevabı yeşil, yanlış seçimi kırmızı gösterir.
+ */
 function QuizOption({
   text,
   index,
@@ -109,7 +133,16 @@ function QuizOption({
   );
 }
 
+// ─── Ders Oynatıcısı ───────────────────────────────────────────────────────
 
+/**
+ * LessonPlayer — Tek bir dersi baştan sona oynatır.
+ *
+ * Aşamalar:
+ *  1. content: paragrafları tek tek göster
+ *  2. quiz: soruları yanıtla (doğru +10 XP bonus, yanlış -10 XP)
+ *  3. done: tamamlanma özeti, 2sn sonra otomatik çıkış
+ */
 function LessonPlayer({
   lesson,
   onComplete,
@@ -130,6 +163,7 @@ function LessonPlayer({
   const [quizIdx, setQuizIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
+  /** Quiz doğru cevaplardan biriken bonus XP */
   const [bonusXP, setBonusXP] = useState(0);
 
   const totalSteps = lesson.content.length + lesson.quiz.length;
@@ -141,6 +175,7 @@ function LessonPlayer({
 
   const currentQuiz = lesson.quiz[quizIdx];
 
+  /** Sonraki paragraf veya quiz aşamasına geç */
   const handleContentNext = () => {
     if (contentIdx < lesson.content.length - 1) {
       setContentIdx(c => c + 1);
@@ -149,6 +184,12 @@ function LessonPlayer({
     }
   };
 
+  /**
+   * Quiz cevabı seçildiğinde:
+   * - Doğruysa +10 XP bonus biriktirir
+   * - Yanlışsa kullanıcıdan -10 XP düşürür
+   * - Haptik geri bildirim verir (native cihazlarda)
+   */
   const handleSelectAnswer = (idx: number) => {
     if (showResult) return;
     setSelected(idx);
@@ -163,6 +204,7 @@ function LessonPlayer({
     }
   };
 
+  /** Sonraki soruya geç veya done aşamasına gir */
   const handleQuizNext = () => {
     if (quizIdx < lesson.quiz.length - 1) {
       setQuizIdx(q => q + 1);
@@ -173,8 +215,10 @@ function LessonPlayer({
     }
   };
 
+  /** Toplam XP: dersin temel ödülü + quiz bonus XP'si */
   const totalXP = lesson.xpReward + bonusXP;
 
+  /** Done aşamasına girilince 2sn sonra otomatik tamamla */
   useEffect(() => {
     if (phase === "done") {
       const timer = setTimeout(() => {
@@ -186,7 +230,7 @@ function LessonPlayer({
 
   return (
     <View style={[styles.playerContainer, { backgroundColor: colors.background, paddingTop: topPadding }]}>
-      {/* Top bar */}
+      {/* Üst çubuk: kapat butonu + ilerleme çubuğu + adım sayacı */}
       <View style={[styles.playerTopBar, { paddingHorizontal: r.hp }]}>
         <View style={{ maxWidth: r.maxW, alignSelf: "center", width: "100%", flexDirection: "row", alignItems: "center", gap: 10 }}>
           <TouchableOpacity
@@ -325,6 +369,7 @@ function LessonPlayer({
       )}
       </View>
 
+      {/* Devam et / Sonraki soru butonu — content ve quiz cevabından sonra gösterilir */}
       {(phase === "content" || (phase === "quiz" && showResult)) && (
         <View
           style={[
@@ -359,6 +404,8 @@ function LessonPlayer({
   );
 }
 
+// ─── Ana Akademi Ekranı ────────────────────────────────────────────────────
+
 export default function AcademyScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -366,7 +413,9 @@ export default function AcademyScreen() {
   const { lessons } = useContent();
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
+  /** Aktif sekme: dersler veya rozetler */
   const [activeTab, setActiveTab] = useState<"lessons" | "badges">("lessons");
+  /** Oynatılmakta olan ders id'si; null ise liste görünümü */
   const [activeLesson, setActiveLesson] = useState<string | null>(null);
   const [xpFloaterVisible, setXpFloaterVisible] = useState(false);
   const [xpFloaterAmount, setXpFloaterAmount] = useState(0);
@@ -374,6 +423,7 @@ export default function AcademyScreen() {
   const badges = user.getBadges();
   const earnedCount = badges.filter((b) => b.earned).length;
 
+  /** Ders tamamlandığında XP kazandır, listelere geri dön */
   const handleCompleteLesson = (lessonId: string, xp: number) => {
     user.completeLesson(lessonId);
     user.earnXP(xp);
@@ -382,6 +432,7 @@ export default function AcademyScreen() {
     setActiveLesson(null);
   };
 
+  /** Aktif ders varsa LessonPlayer'ı tam ekran göster */
   if (activeLesson) {
     const lesson = lessons.find((l) => l.id === activeLesson);
     if (lesson) {
@@ -420,6 +471,7 @@ export default function AcademyScreen() {
           </Text>
         </Animated.View>
 
+        {/* Açıklama banner'ı */}
         <Animated.View
           entering={FadeInDown.delay(40).springify()}
           style={[styles.infoBanner, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "28" }]}
@@ -437,6 +489,7 @@ export default function AcademyScreen() {
           </View>
         </Animated.View>
 
+        {/* Dersler / Rozetler sekme butonları */}
         <Animated.View entering={FadeInDown.delay(60).springify()} style={styles.tabRow}>
           {(["lessons", "badges"] as const).map((tab) => (
             <TouchableOpacity
@@ -468,6 +521,7 @@ export default function AcademyScreen() {
           <View style={styles.lessonsGrid}>
             {lessons.map((lesson, i) => {
               const done = user.completedLessons.includes(lesson.id);
+              /** Önceki ders tamamlanmadıysa bu ders kilitli */
               const locked = i > 0 && !user.completedLessons.includes(lessons[i - 1].id);
 
               return (
@@ -555,6 +609,7 @@ export default function AcademyScreen() {
 
         {activeTab === "badges" && (
           <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.badgesSection}>
+            {/* Rozet özet kartı */}
             <View
               style={[styles.badgeSummary, { backgroundColor: colors.card, borderColor: colors.warning + "44" }]}
             >
@@ -597,222 +652,62 @@ export default function AcademyScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { marginBottom: 12 },
-  pageTitle: { fontFamily: "Inter_700Bold", fontSize: 28, marginBottom: 4 },
-  pageSub: { fontFamily: "Inter_400Regular", fontSize: 14 },
-  infoBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  infoBannerIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  infoBannerTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 13,
-  },
-  infoBannerText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  tabRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
-  tab: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 11,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  tabText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  pageTitle: { fontFamily: "Inter_700Bold", fontSize: 28, letterSpacing: -0.5 },
+  pageSub: { fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 4 },
+  infoBanner: { flexDirection: "row", gap: 12, alignItems: "flex-start", padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 16 },
+  infoBannerIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  infoBannerTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  infoBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
+  tabRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
+  tab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5 },
+  tabText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   lessonsGrid: { gap: 10 },
-  lessonCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-  },
-  lessonIconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  lessonCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1.5 },
+  lessonIconBox: { width: 44, height: 44, borderRadius: 13, alignItems: "center", justifyContent: "center" },
   lessonMeta: { flex: 1, gap: 3 },
-  lessonTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  lessonTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   lessonSubtitle: { fontFamily: "Inter_400Regular", fontSize: 12 },
-  lessonFooter: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 3 },
-  metaText: { fontFamily: "Inter_400Regular", fontSize: 11 },
-  doneTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
+  lessonFooter: { flexDirection: "row", gap: 10, marginTop: 4 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  metaText: { fontFamily: "Inter_400Regular", fontSize: 10 },
+  doneTag: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   doneTagText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   badgesSection: { gap: 14 },
-  badgeSummary: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    padding: 16,
-  },
-  badgeSummaryIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  badgeSummary: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 16, borderWidth: 1.5 },
+  badgeSummaryIcon: { width: 52, height: 52, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   badgeSummaryNum: { fontFamily: "Inter_700Bold", fontSize: 22 },
-  badgeSummaryLabel: { fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 2 },
-  badgesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  badgeSummaryLabel: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  badgesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, justifyContent: "space-between" },
   playerContainer: { flex: 1 },
-  playerTopBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  playerCloseBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  progressTrack: { flex: 1, height: 8, borderRadius: 4, overflow: "hidden" },
-  progressFill: { height: "100%", borderRadius: 4 },
+  playerTopBar: { paddingVertical: 10 },
+  playerCloseBtn: { alignItems: "center", justifyContent: "center" },
+  progressTrack: { flex: 1, height: 6, borderRadius: 3, overflow: "hidden" },
+  progressFill: { height: "100%", borderRadius: 3 },
   stepBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  stepBadgeText: { fontFamily: "Inter_700Bold", fontSize: 12 },
-  playerContent: { paddingHorizontal: 20, paddingTop: 16, gap: 20 },
-  contentBody: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 20,
-    paddingVertical: 24,
-  },
-  lessonIconBig: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-  },
-  lessonStepLabel: { fontFamily: "Inter_700Bold", fontSize: 13, textAlign: "center" },
-  contentText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 17,
-    lineHeight: 28,
-  },
-  quizHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignSelf: "flex-start",
-  },
-  quizHeaderText: { fontFamily: "Inter_700Bold", fontSize: 13 },
-  quizQuestion: { fontFamily: "Inter_700Bold", fontSize: 18, lineHeight: 28 },
-  quizOptions: { gap: 10 },
-  quizOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    padding: 14,
-  },
-  optionLetter: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  stepBadgeText: { fontFamily: "Inter_600SemiBold" },
+  lessonIconBig: { alignItems: "center", justifyContent: "center" },
+  lessonStepLabel: { fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 },
+  contentText: { fontFamily: "Inter_400Regular" },
+  quizHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
+  quizHeaderText: { fontFamily: "Inter_600SemiBold" },
+  quizQuestion: { fontFamily: "Inter_600SemiBold" },
+  quizOptions: {},
+  quizOption: { flexDirection: "row", alignItems: "center", gap: 10, padding: 14, borderRadius: 14, borderWidth: 1.5 },
+  optionLetter: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   optionLetterText: { fontFamily: "Inter_700Bold", fontSize: 13 },
-  quizOptionText: { fontFamily: "Inter_500Medium", fontSize: 15, flex: 1, lineHeight: 22 },
-  explanationBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    padding: 14,
-  },
-  explanationText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22, flex: 1 },
-  continueBar: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-  },
-  continueBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 13,
-    borderRadius: 14,
-  },
-  continueBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#fff" },
-  doneSection: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 28,
-    gap: 18,
-  },
-  doneIconBox: {
-    width: 100,
-    height: 100,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  doneTitle: { fontFamily: "Inter_700Bold", fontSize: 26, textAlign: "center" },
-  doneLessonName: { fontFamily: "Inter_600SemiBold", fontSize: 16, textAlign: "center" },
-  doneXPBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 22,
-    paddingVertical: 16,
-    borderRadius: 16,
-    borderWidth: 1.5,
-  },
-  doneXPNum: { fontFamily: "Inter_700Bold", fontSize: 24 },
+  quizOptionText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 14, lineHeight: 20 },
+  explanationBox: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 12, borderRadius: 12, borderWidth: 1 },
+  explanationText: { flex: 1, fontFamily: "Inter_400Regular" },
+  doneSection: { flex: 1, alignItems: "center", justifyContent: "center" },
+  doneIconBox: { alignItems: "center", justifyContent: "center" },
+  doneTitle: { fontFamily: "Inter_700Bold" },
+  doneLessonName: { fontFamily: "Inter_600SemiBold" },
+  doneXPBox: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingVertical: 14, borderRadius: 16, borderWidth: 1 },
+  doneXPNum: { fontFamily: "Inter_700Bold" },
   doneXPBonus: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
-  doneAutoNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  doneAutoText: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  doneAutoNote: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  doneAutoText: { fontFamily: "Inter_500Medium" },
+  continueBar: { paddingTop: 12, borderTopWidth: 1 },
+  continueBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 16, borderRadius: 16 },
+  continueBtnText: { fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.2 },
 });

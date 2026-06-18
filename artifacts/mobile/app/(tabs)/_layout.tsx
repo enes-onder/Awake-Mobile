@@ -1,3 +1,16 @@
+/**
+ * (tabs)/_layout.tsx — Alt sekme navigasyonu layout'u.
+ *
+ * Platform tespitine göre iki farklı implementasyon seçilir:
+ *  - iOS 26+ (Liquid Glass mevcut): NativeTabLayout — sistem native sekme çubuğu
+ *  - Diğer platformlar (Android, web, eski iOS): ClassicTabLayout — Expo Router Tabs
+ *
+ * Sekmeler: Karargah (index) · Lab · Akademi · Profil
+ *
+ * iOS için SF Symbols, Android/web için Feather ikonları kullanılır.
+ * iOS'ta tab bar BlurView ile şeffaf; web ve Android'de sabit arka plan rengi.
+ */
+
 import { BlurView } from "expo-blur";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
@@ -9,6 +22,10 @@ import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 
+/**
+ * iOS 26+ Liquid Glass sekmeli navigasyon.
+ * SF Symbol ikon adları kullanılır; sistem tarafından render edilir.
+ */
 function NativeTabLayout() {
   return (
     <NativeTabs>
@@ -32,6 +49,10 @@ function NativeTabLayout() {
   );
 }
 
+/**
+ * Android, web ve eski iOS için klasik Expo Router sekme navigasyonu.
+ * iOS'ta BlurView; web'de sabit renk; Android'de şeffaf arka plan kullanılır.
+ */
 function ClassicTabLayout() {
   const colors = useColors();
   const colorScheme = useColorScheme();
@@ -51,16 +72,19 @@ function ClassicTabLayout() {
           borderTopWidth: 1,
           borderTopColor: colors.border,
           elevation: 0,
+          /** Web'de yüksek sekme çubuğu — tarayıcı navigasyonuyla çakışmayı önler */
           ...(isWeb ? { height: 84 } : {}),
         },
         tabBarBackground: () =>
           isIOS ? (
+            /** iOS: Bulanık cam efekti */
             <BlurView
               intensity={100}
               tint={isDark ? "dark" : "light"}
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
+            /** Web: Düz arka plan rengi */
             <View
               style={[
                 StyleSheet.absoluteFill,
@@ -126,6 +150,10 @@ function ClassicTabLayout() {
   );
 }
 
+/**
+ * Tab layout seçici — Liquid Glass kullanılabilirse native,
+ * aksi takdirde klasik Expo Router tab navigasyonu kullanır.
+ */
 export default function TabLayout() {
   if (isLiquidGlassAvailable()) {
     return <NativeTabLayout />;

@@ -1,3 +1,16 @@
+/**
+ * useLabState — Lab ekranının tüm state ve iş mantığını yönetir.
+ *
+ * Lab ekranında iki sekme bulunur: "vakalar" ve "simulasyon".
+ * Vaka akışı: list → active → result (sonra tekrar active veya list)
+ * Simülasyon akışı: list → SimulasyonPlayer → tamamlanma
+ *
+ * Dışarıya açılan değerler:
+ *  - Sekme/state yönetimi, aktif vaka/simülasyon
+ *  - Animasyon tetikleyicileri: celebVisible, xpFloaterVisible
+ *  - Eylemler: handleStartMission, handleVerdict, handleUseClue, handleSimComplete
+ */
+
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { Platform } from "react-native";
@@ -8,28 +21,49 @@ import { useUser } from "@/context/UserContext";
 import type { Mission } from "@/data/missions";
 import type { Simulation } from "@/data/simulations";
 
+/** Lab ekranındaki aktif sekme */
 export type LabTab = "vakalar" | "simulasyon";
+
+/** Vaka oynanışının aşaması */
 export type LabState = "list" | "active" | "result";
 
+/** useLabState hook'unun tam dönüş tipi */
 export interface UseLabStateReturn {
   activeTab: LabTab;
   labState: LabState;
+  /** pendingMissions dizisindeki aktif vakanın indeksi */
   currentMissionIdx: number;
+  /** Açıklanan ipucu sayısı (0 = hiç ipucu kullanılmadı) */
   clueIndex: number;
+  /** Son cevabın doğruluğu — result ekranında gösterilir */
   lastCorrect: boolean;
+  /** Son kazanılan/kaybedilen XP miktarı */
   lastXP: number;
+  /** XP hesabında uygulanan çarpan (günlük 2x veya normal 1x) */
   lastMultiplier: number;
+  /** Oynanmakta olan simülasyonun id'si, yoksa null */
   activeSim: string | null;
+  /** Bu oturumda tamamlanan simülasyon id'leri */
   completedSims: string[];
+  /** Kutlama overlay'i görünür mü */
   celebVisible: boolean;
+  /** Kutlama overlay'i doğru cevap için mi gösteriliyor */
   celebCorrect: boolean;
+  /** XP uçan animasyonu görünür mü */
   xpFloaterVisible: boolean;
+  /** XP uçan animasyonunun gösterdiği miktar */
   xpFloaterAmount: number;
+  /** Web'de min 67px, native'de güvenli alan kadar üst boşluk */
   topPadding: number;
+  /** Alt güvenli alan yüksekliği */
   bottomInset: number;
+  /** Henüz tamamlanmamış vakalar listesi */
   pendingMissions: Mission[];
+  /** Tamamlanmış vakalar listesi */
   completedMissions: Mission[];
+  /** Şu anda oynanan vaka, yoksa null */
   activeMission: Mission | null;
+  /** Oynanmakta olan simülasyonun tam verisi */
   activeSim_data: Simulation | undefined;
   simulations: Simulation[];
   setActiveTab: (tab: LabTab) => void;
@@ -62,24 +96,36 @@ export function useLabState(): UseLabStateReturn {
   const [xpFloaterVisible, setXpFloaterVisible] = useState(false);
   const [xpFloaterAmount, setXpFloaterAmount] = useState(0);
 
+  /** Web'de navigasyon çubuğu için minimum 67px üst boşluk */
   const topPadding =
     Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
+  /** Kullanıcının henüz tamamlamadığı vakalar */
   const pendingMissions = missions.filter(
     (m) => !user.completedMissions.includes(m.id)
   );
+  /** Kullanıcının tamamladığı vakalar */
   const completedMissions = missions.filter((m) =>
     user.completedMissions.includes(m.id)
   );
   const activeMission = pendingMissions[currentMissionIdx] ?? null;
   const activeSim_data = simulations.find((s) => s.id === activeSim);
 
+  /** Belirtilen indeksteki vakayı başlatır */
   const handleStartMission = (idx: number) => {
     setCurrentMissionIdx(idx);
     setClueIndex(0);
     setLabState("active");
   };
 
+  /**
+   * Kullanıcının "Gerçek" veya "Sahte" kararını işler:
+   * 1. Doğruluk kontrolü
+   * 2. XP hesaplama (doğruysa reward × multiplier, yanlışsa -%40)
+   * 3. UserContext güncelleme
+   * 4. Kutlama animasyonunu tetikleme
+   * 5. 2.3 saniye sonra result ekranına geçiş
+   */
   const handleVerdict = (verdict: "real" | "fake") => {
     if (!activeMission) return;
     const correct = verdict === activeMission.verdict;
@@ -99,6 +145,7 @@ export function useLabState(): UseLabStateReturn {
     setXpFloaterAmount(xpEarned);
     setXpFloaterVisible(true);
 
+    /** Native cihazlarda haptik geri bildirim */
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(
         correct
@@ -107,12 +154,17 @@ export function useLabState(): UseLabStateReturn {
       );
     }
 
+    /** Kutlama animasyonu bittikten sonra result ekranına geç */
     setTimeout(() => {
       setCelebVisible(false);
       setTimeout(() => setLabState("result"), 380);
     }, 2300);
   };
 
+  /**
+   * Bir ipucu açar ve 5 XP düşürür.
+   * Tüm ipuçları zaten açıksa hiçbir şey yapmaz.
+   */
   const handleUseClue = () => {
     if (!activeMission || clueIndex >= activeMission.clues.length) return;
     setClueIndex((prev) => prev + 1);
@@ -122,6 +174,10 @@ export function useLabState(): UseLabStateReturn {
     }
   };
 
+  /**
+   * Result ekranından "Sonraki Vaka"ya geçer.
+   * Bekleyen vaka yoksa liste ekranına döner.
+   */
   const handleNextMission = () => {
     if (pendingMissions.length > 0) {
       setCurrentMissionIdx(0);
@@ -132,6 +188,10 @@ export function useLabState(): UseLabStateReturn {
     }
   };
 
+  /**
+   * Simülasyon tamamlandığında XP kazandırır ve listeye döner.
+   * Aynı simülasyon bir oturumda iki kez tamamlanamaz.
+   */
   const handleSimComplete = (simId: string, xpEarned: number) => {
     user.earnXP(xpEarned);
     if (!completedSims.includes(simId)) {

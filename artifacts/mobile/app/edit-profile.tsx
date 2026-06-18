@@ -1,3 +1,15 @@
+/**
+ * edit-profile.tsx — Profil düzenleme ekranı.
+ *
+ * Kullanıcı kod adını, biyografisini ve favori konusunu değiştirebilir.
+ * Tüm form state'i useEditProfile hook'u tarafından yönetilir.
+ *
+ * Özel kurallar:
+ *  - Kullanıcı adı son 30 gün içinde değiştirildiyse alan kilitlenir
+ *  - Kilitli alana dokunulunca UsernameWarningModal gösterilir
+ *  - Değişiklik yapılmadıysa "Kaydet" butonu pasif kalır
+ */
+
 import { useRouter } from "expo-router";
 import React from "react";
 import { Keyboard, Platform, Pressable, ScrollView } from "react-native";
@@ -23,6 +35,7 @@ export default function EditProfileScreen() {
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
   return (
+    /** Ekrana dokunulduğunda klavyeyi kapat */
     <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
       <ScrollView
         style={[{ flex: 1 }, { backgroundColor: colors.background }]}
@@ -38,12 +51,14 @@ export default function EditProfileScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* Geri butonu + Kaydet butonu (değişiklik yoksa pasif) */}
         <EditProfileTopBar
           hasChanges={profile.hasChanges}
           onBack={() => router.back()}
           onSave={profile.handleSave}
         />
 
+        {/* Kullanıcı adı alanı — 30 günlük kilitli olabilir */}
         <UsernameField
           value={profile.usernameInput}
           onChangeText={profile.setUsernameInput}
@@ -57,6 +72,7 @@ export default function EditProfileScreen() {
           onChangeText={profile.setBioInput}
         />
 
+        {/* Favori konu seçici — ön tanımlı kategoriler listesi */}
         <TopicsPicker
           selected={profile.favoriteTopic}
           onSelect={profile.setFavoriteTopic}
@@ -65,6 +81,7 @@ export default function EditProfileScreen() {
         <InfoCard />
       </ScrollView>
 
+      {/* Kullanıcı adı kilit uyarı modal'ı — kalan gün sayısını gösterir */}
       <UsernameWarningModal
         visible={profile.showUsernameWarning}
         daysLeft={profile.daysLeft}

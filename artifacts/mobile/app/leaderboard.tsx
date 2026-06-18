@@ -1,3 +1,16 @@
+/**
+ * leaderboard.tsx — Liderlik tablosu ekranı.
+ *
+ * XP'ye göre sıralı tüm oyuncuları gösterir.
+ * Gerçek API verileri ile mock dedektif verileri birleştirilir (useLeaderboard hook'u).
+ *
+ * Bileşen yapısı:
+ *  - Üst çubuk: geri butonu + ekran başlığı + kullanıcının sıralaması
+ *  - PodiumCard: ilk 3 oyuncuyu podium görünümünde gösterir
+ *  - FlatList: tüm sıralama satırları (LeaderRow)
+ *  - Yükleniyor/Hata/Boş durumlar ayrı bileşenlerle yönetilir
+ */
+
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -23,10 +36,12 @@ export default function LeaderboardScreen() {
   const { entries, loading, error, retry } = useLeaderboard();
 
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
+  /** Kullanıcının listede bulunduğu pozisyon (bulunamazsa 0) */
   const myPosition = entries.findIndex((e) => e.username === username) + 1;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Üst çubuk */}
       <View
         style={[
           styles.header,
@@ -42,15 +57,18 @@ export default function LeaderboardScreen() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Liderlik Tablosu</Text>
+          {/** Kullanıcı listede bulunuyorsa sıralamasını göster */}
           {myPosition > 0 && (
             <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
               Sıralaman: #{myPosition}
             </Text>
           )}
         </View>
+        {/** Başlığı ortalamak için sağ boşluk */}
         <View style={{ width: 38 }} />
       </View>
 
+      {/* İçerik: yükleniyor / hata / boş / liste */}
       {loading ? (
         <LoadingState />
       ) : error ? (
@@ -74,10 +92,12 @@ export default function LeaderboardScreen() {
             <LeaderRow
               entry={item}
               position={index + 1}
+              /** Kullanıcının kendi satırını vurgulamak için */
               isMe={item.username === username}
               index={index}
             />
           )}
+          /** İlk 3 oyuncu için podium görünümü */
           ListHeaderComponent={entries.length > 0 ? <PodiumCard entries={entries} /> : null}
           showsVerticalScrollIndicator={false}
         />

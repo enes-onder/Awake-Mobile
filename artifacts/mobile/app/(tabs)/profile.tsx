@@ -1,3 +1,20 @@
+/**
+ * (tabs)/profile.tsx — Profil ekranı.
+ *
+ * Kullanıcının oyun geçmişini, rütbe ilerlemesini ve rozetlerini gösterir.
+ * Tüm veri useProfile hook'u aracılığıyla UserContext'ten gelir.
+ *
+ * Bileşen yapısı (yukarıdan aşağıya):
+ *  1. ProfileHeader  — başlık + profili düzenle butonu
+ *  2. HeroCard       — kullanıcı adı, bio, rütbe, XP ilerleme çubuğu, streak
+ *  3. AnonBanner     — misafir kullanıcılar için hesap oluşturma çağrısı
+ *  4. StatsGrid      — 4'lü istatistik kartları (vaka, doğruluk, XP, rozet)
+ *  5. Leaderboard butonu — liderlik tablosuna yönlendirir
+ *  6. RankPath       — tüm rütbeleri gösteren ilerleme yolu
+ *  7. CertCard       — XP sertifikası
+ *  8. SignOutButton  — çıkış butonu
+ */
+
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -55,6 +72,7 @@ export default function ProfileScreen() {
         />
       </Animated.View>
 
+      {/* Misafir kullanıcılara hesap oluşturma önerisi */}
       {user.isAnonymous && (
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <AnonBanner />
@@ -63,6 +81,7 @@ export default function ProfileScreen() {
 
       <StatsGrid items={statItems} startDelay={120} />
 
+      {/* Liderlik tablosuna geçiş kartı */}
       <Animated.View entering={FadeInDown.delay(200).springify()}>
         <TouchableOpacity
           style={[leaderboardStyles.card, { backgroundColor: colors.card, borderColor: "#FFD700" + "44" }]}
@@ -82,6 +101,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </Animated.View>
 
+      {/* Tüm rütbe aşamalarını gösteren yol haritası */}
       <RankPath ranks={RANKS} userXp={user.xp} rankIdx={rankIdx} delay={260} />
 
       <CertCard xp={user.xp} delay={320} />
@@ -91,6 +111,7 @@ export default function ProfileScreen() {
   );
 }
 
+/** Liderlik tablosu kart stili — sadece bu ekranda kullanıldığı için yerel tutulur */
 const leaderboardStyles = StyleSheet.create({
   card: {
     flexDirection: "row",

@@ -1,3 +1,16 @@
+/**
+ * (tabs)/index.tsx — Karargah (Ana Sayfa) ekranı.
+ *
+ * Kullanıcının günlük durumunu tek bakışta gösterir:
+ *  - Streak ve günlük bonus durumu (StreakCard)
+ *  - XP ilerleme çubuğu ve mevcut rütbe (XPProgressCard)
+ *  - Özet istatistikler: tamamlanan vaka, doğruluk, XP (StatsRow)
+ *  - Günün önerilen vakası (DailyMissionCard)
+ *  - Bekleyen vakalar listesi (ActiveMissionsList)
+ *
+ * Uygulama açılışında streak bonus XP kazanıldıysa toast bildirimi gösterilir.
+ */
+
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
@@ -24,9 +37,13 @@ export default function KarargahScreen() {
   const insets = useSafeAreaInsets();
   const user = useUser();
   const { missions } = useContent();
+
+  /** Streak bonus toast'unun görünürlüğü */
   const [showBonus, setShowBonus] = useState(false);
+  /** Aynı oturumda birden fazla toast göstermemek için guard */
   const bonusShownRef = useRef(false);
 
+  /** Streak bonus kazanıldıysa ve henüz gösterilmediyse toast'u tetikle */
   useEffect(() => {
     if (user.streakBonusEarned > 0 && !bonusShownRef.current) {
       bonusShownRef.current = true;
@@ -34,10 +51,12 @@ export default function KarargahScreen() {
     }
   }, [user.streakBonusEarned]);
 
+  /** Web'de navigasyon çubuğu yüksekliği için minimum 67px üst boşluk */
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
   const pendingMissions = missions.filter((m) => !user.completedMissions.includes(m.id));
   const completedCount = missions.filter((m) => user.completedMissions.includes(m.id)).length;
+  /** Günün önerilen vakası: henüz tamamlanmamış ilk vaka */
   const dailyMission = pendingMissions[0] ?? null;
 
   return (
@@ -58,6 +77,7 @@ export default function KarargahScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Başlık satırı: selamlama metni + rütbe rozeti */}
         <Animated.View entering={FadeInDown.delay(0).springify()} style={styles.headerRow}>
           <View>
             <Text style={[styles.greeting, { color: colors.mutedForeground }]}>
@@ -85,6 +105,7 @@ export default function KarargahScreen() {
           xp={user.xp}
         />
 
+        {/* Yalnızca bekleyen vaka varsa günün vakasını göster */}
         {dailyMission && (
           <DailyMissionCard
             mission={dailyMission}
