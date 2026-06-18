@@ -1,9 +1,26 @@
+/**
+ * seed.ts — Veritabanına başlangıç verisi yükler.
+ *
+ * Çalıştırmak için:
+ *   pnpm --filter @workspace/db run seed
+ *
+ * Ne yapar?
+ *  - Mevcut kayıtları silmez; upsert (insert or replace) kullanır.
+ *    Yani aynı id'ye sahip kayıt varsa güncellenir, yoksa eklenir.
+ *  - 8 vaka (missions), 6 ders (lessons), 3 simülasyon (simulations) yükler.
+ *  - Tüm içerik Türkçedir ve dezenformasyon tespiti konularını kapsar.
+ *
+ * Bağımlılık:
+ *  DATABASE_URL ortam değişkeni tanımlı olmalıdır (Replit Secrets'ta mevcut).
+ */
+
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { lessonsTable, missionsTable, simulationsTable } from "./src/schema/index.ts";
 
 const { Pool } = pg;
 
+/** DATABASE_URL yoksa seed başlamadan hata fırlatır */
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set.");
 }
@@ -11,6 +28,12 @@ if (!process.env.DATABASE_URL) {
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const db = drizzle(pool);
 
+/**
+ * Vakalar (missions) — kullanıcının gerçek/sahte kararı verdiği sosyal medya gönderileri.
+ * verdict: "fake" = sahte haber, "real" = gerçek haber
+ * type: "photo" | "quote" | "stats" | "headline"
+ * difficulty: 1=Kolay, 2=Orta, 3=Zor
+ */
 const missions = [
   {
     id: "m1",
@@ -248,6 +271,11 @@ const missions = [
   },
 ];
 
+/**
+ * Simülasyonlar — senaryo tabanlı karar ağacı alıştırmaları.
+ * steps: narrative (bilgi ekranı) ve choice (seçim sorusu) adımlarından oluşur.
+ * Her doğru seçim xpReward kadar XP kazandırır.
+ */
 const simulations = [
   {
     id: "s1",
@@ -422,6 +450,11 @@ const simulations = [
   },
 ];
 
+/**
+ * Dersler — okuma metni ve quiz soruları içeren eğitim modülleri.
+ * content: paragraf metinleri dizisi
+ * quiz: { question, options, correctIdx, explanation }[]
+ */
 const lessons = [
   {
     id: "l1",
@@ -546,9 +579,9 @@ const lessons = [
       },
       {
         question: "Seni öfkelendiren veya korkutan bir içerik gördüğünde ne yapmalısın?",
-        options: ["Hemen paylaşmalıyım, önemli olabilir", "Görmezden gelmeliyim", "Paylaşmadan önce bekleyip kaynağı kontrol etmeliyim", "Arkadaşlarıma sorup paylaşmalıyım"],
-        correctIdx: 2,
-        explanation: "Duygusal tepki veriyorsan bu dezenformasyon işareti olabilir. Bekle, kaynağı doğrula, sonra karar ver.",
+        options: ["Hemen paylaşırım, önemli olabilir", "10 dakika bekler ve kaynağını araştırırım", "Arkadaşlarımın tepkisine bakarım", "Beğeni sayısını kontrol ederim"],
+        correctIdx: 1,
+        explanation: "Güçlü duygusal tepki dezenformasyon belirtisi olabilir. Bekleme süresi eleştirel düşünceyi devreye sokar.",
       },
     ],
     requiredXp: 100,
@@ -557,31 +590,31 @@ const lessons = [
   },
   {
     id: "l5",
-    title: "Yapay Zeka Görsel Tespiti",
-    subtitle: "YZ üretimi fotoğrafları nasıl anlarsın",
-    duration: "6 dk",
+    title: "Yapay Zeka İçerikleri",
+    subtitle: "Yapay zeka üretimini nasıl tanırsın",
+    duration: "9 dk",
     icon: "cpu",
     color: "#FF3B30",
-    xpReward: 40,
+    xpReward: 50,
     content: [
-      "Yapay zeka ile üretilen fotoğraflar giderek gerçekçileşiyor. Ancak dikkatli gözler için hâlâ ipuçları var. Bu becerileri öğrenmek artık temel bir medya okuryazarlığı gereksinimidir.",
-      "Ellere dikkat et: YZ modelleri parmak sayısını, eklem yapısını ve el şeklini sıklıkla yanlış üretir. Fazla veya eksik parmak, birbirine geçmiş eller sık görülen hatalardır.",
-      "Arka plan metinlerini incele: YZ genellikle anlamsız, birbirine karışmış veya bulanık yazılar üretir. Tabelalar, kitap kapakları veya ekranlar okunaksız görünebilir.",
-      "Kulak ve saç simetrisi: Gerçek yüzlerde hafif doğal asimetri bulunur. YZ görüntülerinde abartılı simetri, garip saç kökü geçişleri veya kulak şekli hatalar olabilir.",
-      "Araçlar: Hive Moderation, AI or Not (aiornot.com), ve Illuminarty gibi ücretsiz platformlar YZ tespiti yapabilir. Ancak bu araçlar da yanılabilir — manuel inceleme gereklidir.",
+      "Yapay zeka (YZ) araçları artık gerçekçi fotoğraf, video ve ses dosyaları üretebiliyor. Bu içerikleri tanımak giderek zorlaşıyor ancak bazı ipuçları hâlâ işe yarıyor.",
+      "YZ fotoğraflarında dikkat etmen gerekenler: Eller genellikle yanlış sayıda parmağa sahip veya anormal görünür. Arka plandaki metinler bulanık, anlamsız ya da birbiriyle çelişir. Yüz simetrisi aşırı mükemmel görünebilir.",
+      "Deepfake videolarda yüz kenarlıkları titrer, göz kırpma ritmi doğal değildir ve ses ile dudak hareketi tam olarak eşleşmez.",
+      "Araçlar: FotoForensics, Hugging Face'in AI dedektörleri ve Google'ın SynthID teknolojisi YZ içeriği tespitinde kullanılabilir — ancak hiçbiri %100 doğru değildir.",
+      "En iyi strateji: İçeriğin bağlamına bak. Kim yayımladı? Neden şimdi? Başka kaynak var mı? Teknolojik araçlar bağlamsal analizin yerini tutamaz.",
     ],
     quiz: [
       {
-        question: "YZ üretimi fotoğraflarda en sık görülen hata hangisidir?",
-        options: ["Yanlış renkler", "El ve parmak hataları", "Bulanık arka plan", "Yanlış ışıklandırma"],
+        question: "YZ üretimi fotoğraflarda en sık hangi hata görülür?",
+        options: ["Renk dengesi bozukluğu", "Anormal el ve parmak detayları", "Düşük çözünürlük", "Yanlış ışıklandırma"],
         correctIdx: 1,
-        explanation: "YZ modelleri parmak sayısı ve el yapısını üretmekte sıklıkla zorlanır. Bu en kolay tespit yöntemlerinden biridir.",
+        explanation: "Mevcut YZ modelleri el anatomisini doğru üretmekte zorlanır. Anormal parmak sayısı veya şekli sık görülen bir hata.",
       },
       {
-        question: "Bir görselin YZ üretimi olup olmadığını kontrol etmek için ne kullanırsın?",
-        options: ["Google Çeviri", "aiornot.com gibi tespit araçları", "Instagram filtreleri", "Fotoğraf galerisi"],
-        correctIdx: 1,
-        explanation: "aiornot.com, Hive Moderation gibi araçlar görüntüyü analiz ederek YZ olasılığını tahmin eder.",
+        question: "YZ içerik dedektörleri hakkında hangisi doğrudur?",
+        options: ["Her zaman %100 doğru sonuç verir", "Hiçbiri güvenilir değildir", "Yardımcı olabilir ama yanılabilirler", "Sadece videolar için çalışır"],
+        correctIdx: 2,
+        explanation: "YZ dedektörleri yardımcı araçlardır ama yanılabilirler. Bağlamsal analiz her zaman eşlik etmelidir.",
       },
     ],
     requiredXp: 150,
@@ -590,31 +623,31 @@ const lessons = [
   },
   {
     id: "l6",
-    title: "Bağlam Çıkarma Tekniği",
-    subtitle: "Yanlış bağlamdaki gerçek içerikleri tanı",
-    duration: "5 dk",
-    icon: "layers",
+    title: "Doğrulama Platformları",
+    subtitle: "Türkiye'nin fact-check araçları",
+    duration: "4 dk",
+    icon: "check-circle",
     color: "#00D4FF",
-    xpReward: 30,
+    xpReward: 25,
     content: [
-      "Yanlış bağlam manipülasyonu: Gerçek bir fotoğraf veya video, farklı bir olaya aitmiş gibi sunulur. Bu en yaygın dezenformasyon türlerinden biridir çünkü içerik 'gerçek' görünür.",
-      "Tersine görsel arama ile fotoğrafın ilk ne zaman ve nerede yayımlandığını bul. Eğer fotoğraf çok eski bir tarihte başka bir ülkeden yayımlanmışsa, yanlış bağlam kullanılmış olabilir.",
-      "Fotoğraftaki detaylara bak: Araç plakaları, tabela yazıları, giysi tarzı ve mimari özellikler hangi ülke ve döneme ait olduğu hakkında ipuçları verebilir.",
-      "Video için: Videonun başlangıç ve bitişini izle. Klip kesilmiş olabilir ve bağlamı değiştiren kısımlar çıkarılmış olabilir.",
-      "Bir haber 'yurt dışından' veya 'yurt içinden' diye çerçeveleniyorsa bağlamı mutlaka doğrula. Mevsim, araç tipleri ve dil ipuçları yardımcı olabilir.",
+      "Türkiye'de birkaç bağımsız doğrulama platformu var. Bu platformlar, viral iddiaları uzman gazeteciler ve araştırmacılarla inceleyerek sonuçlarını yayımlıyor.",
+      "teyit.org: Türkiye'nin en köklü bağımsız doğrulama kuruluşu. Fotoğraf, video, istatistik ve alıntı doğrulamaları yapıyor. Avrupa Doğrulama Ağı üyesi.",
+      "dogruluk.com.tr: Siyasi açıklamaları ve medya haberlerini doğrulayan platform. Özellikle seçim dönemlerinde aktif.",
+      "Teyit.org'a şüpheli içerik iletmek için web sitesindeki formu veya WhatsApp hattını kullanabilirsin. Sonuçlar genellikle 24-48 saat içinde yayımlanır.",
+      "Uluslararası platformlar: Snopes (İngilizce), FactCheck.org, PolitiFact. Yabancı kaynaklı iddiaları araştırırken kullanılabilir.",
     ],
     quiz: [
       {
-        question: "Yanlış bağlam manipülasyonu nedir?",
-        options: ["Sahte bir fotoğraf oluşturmak", "Gerçek bir içeriği yanlış bir olay için kullanmak", "Haber başlığını değiştirmek", "Fotoğrafı düzenlemek"],
+        question: "teyit.org ne tür bir kuruluştur?",
+        options: ["Devlet haberleri ajansı", "Bağımsız doğrulama platformu", "Sosyal medya şirketi", "Üniversite araştırma merkezi"],
         correctIdx: 1,
-        explanation: "Yanlış bağlam manipülasyonunda içerik gerçektir ama yanlış bir zaman, yer veya olaya ait gibi sunulur.",
+        explanation: "teyit.org, Avrupa Doğrulama Ağı üyesi bağımsız bir doğrulama kuruluşudur. Devlet veya medya grubuyla bağlantısı yoktur.",
       },
       {
-        question: "Bir fotoğrafın bağlamını doğrulamak için hangisine bakarsın?",
-        options: ["Kaç kişi beğenmiş", "Plaka, tabela ve giysi tarzı gibi detaylar", "Fotoğrafın boyutu", "Yorumlar bölümü"],
+        question: "Şüpheli bir içeriği teyit.org'a nasıl iletirsin?",
+        options: ["E-posta ile", "Web sitesindeki form veya WhatsApp hattı ile", "Telefon ile", "Sosyal medya yorumu ile"],
         correctIdx: 1,
-        explanation: "Araç plakaları, tabela dili, mimari ve kıyafet tarzı gibi detaylar fotoğrafın gerçek konumu ve zamanı hakkında ipucu verir.",
+        explanation: "teyit.org web sitesindeki form ve WhatsApp hattı üzerinden şüpheli içerik iletilebilir.",
       },
     ],
     requiredXp: 200,
@@ -623,30 +656,52 @@ const lessons = [
   },
 ];
 
+/**
+ * Ana seed fonksiyonu — tüm tabloları sırayla doldurur.
+ * Hata oluşursa process sona erer ve hata mesajı stderr'e yazılır.
+ */
 async function seed() {
   console.log("Seeding missions...");
   for (const mission of missions) {
-    await db.insert(missionsTable).values(mission).onConflictDoNothing();
-    console.log(`  ✓ ${mission.id}: ${mission.title}`);
+    await db
+      .insert(missionsTable)
+      .values(mission as typeof missionsTable.$inferInsert)
+      .onConflictDoUpdate({
+        target: missionsTable.id,
+        set: mission as typeof missionsTable.$inferInsert,
+      });
   }
+  console.log(`✓ ${missions.length} missions seeded`);
 
   console.log("Seeding simulations...");
-  for (const simulation of simulations) {
-    await db.insert(simulationsTable).values(simulation).onConflictDoNothing();
-    console.log(`  ✓ ${simulation.id}: ${simulation.title}`);
+  for (const sim of simulations) {
+    await db
+      .insert(simulationsTable)
+      .values(sim as typeof simulationsTable.$inferInsert)
+      .onConflictDoUpdate({
+        target: simulationsTable.id,
+        set: sim as typeof simulationsTable.$inferInsert,
+      });
   }
+  console.log(`✓ ${simulations.length} simulations seeded`);
 
   console.log("Seeding lessons...");
   for (const lesson of lessons) {
-    await db.insert(lessonsTable).values(lesson).onConflictDoNothing();
-    console.log(`  ✓ ${lesson.id}: ${lesson.title}`);
+    await db
+      .insert(lessonsTable)
+      .values(lesson as typeof lessonsTable.$inferInsert)
+      .onConflictDoUpdate({
+        target: lessonsTable.id,
+        set: lesson as typeof lessonsTable.$inferInsert,
+      });
   }
+  console.log(`✓ ${lessons.length} lessons seeded`);
 
-  console.log("Done!");
   await pool.end();
+  console.log("Seed complete.");
 }
 
-seed().catch((e) => {
-  console.error(e);
+seed().catch((err) => {
+  console.error(err);
   process.exit(1);
 });

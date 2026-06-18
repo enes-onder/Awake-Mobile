@@ -290,16 +290,14 @@ Express v5 tabanlı API. Port 3001'de çalışır.
 
 | Dosya | Açıklama |
 |---|---|
-| `src/index.ts` | Sunucu başlatma, port dinleme |
-| `src/app.ts` | Middleware (pino logger, CORS, JSON parser) + route bağlama |
-| `src/routes/index.ts` | Sub-router'lar `/api` altında toplanır |
-| `src/routes/health.ts` | `GET /api/healthz` → `{ status: "ok" }` |
-| `src/routes/missions.ts` | `GET /api/missions` → görevler |
-| `src/routes/lessons.ts` | `GET /api/lessons` → dersler |
-| `src/routes/simulations.ts` | `GET /api/simulations` → simülasyonlar |
-| `src/routes/leaderboard.ts` | `GET /api/leaderboard` + `POST /api/profile/sync` |
-| `src/lib/logger.ts` | Pino logger instance |
-| `build.mjs` | esbuild ile TypeScript → JavaScript derleme |
+| `src/index.ts` | Sunucu başlatma, PORT doğrulaması, port dinleme |
+| `src/app.ts` | Middleware sırası: pino-http → CORS → JSON parser → `/api` route'ları |
+| `src/routes/index.ts` | Sub-router'ları `/api` altında birleştirir |
+| `src/routes/health.ts` | `GET /api/healthz` → `{ status: "ok" }` (Zod doğrulamalı) |
+| `src/routes/content.ts` | `GET /api/missions`, `/api/lessons`, `/api/simulations` — isActive=true filtreli, orderIndex sıralı |
+| `src/routes/profiles.ts` | `POST /api/profiles/upsert` (kullanıcı upsert) + `GET /api/leaderboard` (XP sıralaması) |
+| `src/lib/logger.ts` | Pino logger — geliştirmede renkli, production'da JSON; hassas başlıklar redact edilir |
+| `build.mjs` | esbuild ile TypeScript → ESM bundle (`dist/index.mjs`); CJS uyumluluk banner'ı dahil |
 
 ---
 
@@ -315,9 +313,29 @@ Express v5 tabanlı API. Port 3001'de çalışır.
 
 | Değişken | Zorunlu | Açıklama |
 |---|---|---|
-| `DATABASE_URL` | Evet (API için) | Replit PostgreSQL bağlantı dizesi |
+| `DATABASE_URL` | Evet (API için) | Replit PostgreSQL bağlantı dizesi (Replit Secrets'ta tanımlı) |
 | `PORT` | Hayır | API portu (varsayılan 3001) |
-| `EXPO_PUBLIC_API_URL` | Hayır | Mobil uygulamanın API endpoint'i (varsayılan: `http://localhost:3001/api`) |
+
+> ⚠️ **`EXPO_PUBLIC_API_URL` tanımlanmamalıdır.**
+> Bu değişken Expo bundle'ına gömülür. Tanımlı olursa tarayıcı `localhost:3001`'e istek atar — bu kullanıcının kendi makinesine gider, Replit container'ına değil.
+> Değişken boş bırakıldığında `api.ts` relative URL (`/api/...`) kullanır ve web-proxy.js isteği doğru porta yönlendirir.
+
+---
+
+## Port ve Proxy Mimarisi
+
+```
+Tarayıcı (Replit preview)
+      ↓ port 5000
+artifacts/mobile/server/web-proxy.js
+      ├── /api/* istekleri  → localhost:3001 (Express API sunucusu)
+      └── diğer istekler    → localhost:18115 (Expo Metro bundler)
+
+WebSocket (HMR)            → Metro'ya doğrudan TCP tüneli
+```
+
+Expo bundle relative URL kullanır (`/api/missions`).
+Tarayıcı aynı origin'e istek atar → CORS sorunu yok.
 
 ---
 
@@ -332,7 +350,7 @@ NavController:
   username yok? → /onboarding (intro slaytlar → QuickEntry → kod adı yaz → başla)
   username var? → /(tabs)
       ↓
-ContentContext → REST API'den içerik çek
+ContentContext → API'den içerik çek (relative URL → proxy → Express)
   GET /api/missions, /api/lessons, /api/simulations
   Başarılı → API verisini kullan
   Başarısız → data/*.ts yerel yedekler (offline fallback)
@@ -341,5 +359,7 @@ Kullanıcı oynar (lab, academy)
       ↓
 UserContext.completeMission() / earnXP()
       ↓
-AsyncStorage'a kaydet + api.syncProfile() → Ekran güncellenir
+AsyncStorage'a kaydet + api.syncProfile() → POST /api/profiles/upsert
+      ↓
+Ekran güncellenir
 ```
