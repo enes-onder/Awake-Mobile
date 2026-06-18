@@ -57,7 +57,7 @@ export default function ProfileScreen() {
 
       {user.isAnonymous && (
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <AnonBanner onPress={() => router.push("/onboarding")} />
+          <AnonBanner />
         </Animated.View>
       )}
 

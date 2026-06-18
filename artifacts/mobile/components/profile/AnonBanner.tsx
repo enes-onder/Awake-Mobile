@@ -1,17 +1,21 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 
 import { styles } from "./styles";
 
-interface AnonBannerProps {
-  onPress: () => void;
-}
-
-export function AnonBanner({ onPress }: AnonBannerProps) {
+export function AnonBanner() {
   const colors = useColors();
+
+  const handlePress = () => {
+    Alert.alert(
+      "Misafir Hesabı",
+      "İlerlemeniz şu an yalnızca bu cihazda kayıtlı. Uygulama silinirse veya cihaz değiştirilirse verileriniz kaybolur.\n\nGoogle ve Apple ile giriş özelliği yakında geliyor!",
+      [{ text: "Anladım", style: "default" }]
+    );
+  };
 
   return (
     <TouchableOpacity
@@ -19,16 +23,18 @@ export function AnonBanner({ onPress }: AnonBannerProps) {
         styles.anonBanner,
         { backgroundColor: colors.warning + "14", borderColor: colors.warning + "44" },
       ]}
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.8}
     >
       <View style={[styles.anonIconBox, { backgroundColor: colors.warning + "22" }]}>
-        <Feather name="user-x" size={18} color={colors.warning} />
+        <Feather name="alert-triangle" size={18} color={colors.warning} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.anonTitle, { color: colors.foreground }]}>Misafir Hesabı</Text>
+        <Text style={[styles.anonTitle, { color: colors.foreground }]}>
+          İlerlemeniz Kaydedilmiyor
+        </Text>
         <Text style={[styles.anonSub, { color: colors.mutedForeground }]}>
-          İlerlemen kaybolabilir. Kalıcı hesap oluşturmak için dokun.
+          Misafir modundasınız — veriler yalnızca bu cihazda. Üye olmak için dokun.
         </Text>
       </View>
       <Feather name="chevron-right" size={16} color={colors.warning} />

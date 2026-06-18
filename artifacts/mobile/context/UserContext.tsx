@@ -66,6 +66,7 @@ interface UserState {
   streak: number;
   lastPlayDate: string | null;
   lastLoginDate: string | null;
+  isGuestMode: boolean;
 }
 
 interface UserContextType extends UserState {
@@ -105,6 +106,7 @@ const defaultState: UserState = {
   streak: 0,
   lastPlayDate: null,
   lastLoginDate: null,
+  isGuestMode: true,
 };
 
 const STORAGE_KEY = "@dogruluk_user_v2";
@@ -217,7 +219,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       : 0;
   const dailyPlayedToday = state.lastPlayDate === todayStr();
   const dailyXPMultiplier = dailyPlayedToday ? 1 : 2;
-  const isAnonymous = !state.username;
+  const isAnonymous = state.isGuestMode;
 
   const earnXP = useCallback(
     (amount: number) => {

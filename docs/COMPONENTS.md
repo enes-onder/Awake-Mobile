@@ -8,45 +8,103 @@ Tüm yeniden kullanılabilir UI parçaları `artifacts/mobile/components/` için
 
 ## `onboarding/` — Onboarding Adım Bileşenleri
 
-`app/onboarding.tsx` ince orkestratörüne hizmet eden bileşen grubu. Tüm auth state'i ve Supabase işlemleri `hooks/useOnboardingAuth.ts`'de; bu bileşenler sadece render eder.
+`app/onboarding.tsx` ince orkestratörüne hizmet eden bileşen grubu.
 
-| Bileşen | Sorumluluğu |
-|---|---|
-| `GlowRing` | Nabız atan animasyonlu ışık halkası (Reanimated) |
-| `OnboardingLogo` | GlowRing + kalkan ikonu — tüm adımlarda paylaşımlı |
-| `ErrorBox` | Hata (kırmızı) / başarı (yeşil, ✅ öneki) mesaj kutusu |
-| `BackButton` | Sol üst ok butonu |
-| `AuthStep` | Provider seçim ekranı (4 provider + misafir) |
-| `EmailStep` | E-posta formu — şifre ve magic link modları, kayıt/giriş toggle'ı |
-| `PhoneStep` | Telefon formu — +90 ön eki otomatik |
-| `OtpStep` | 6 haneli SMS kodu; "Tekrar gönder" bağlantısı |
-| `NameStep` | Kod adı seçimi; 3 vizyon kartı (Gerçek Beceri Öğren / Her Gün İlerle / Haber Kandırmacasına Dur De) + ScrollView wrapper; "Göreve Başla" butonu |
-| `styles.ts` | Tüm adımların paylaşımlı `StyleSheet` nesnesi |
-| `types.ts` | `Step`, `AuthProvider`, `ProviderItem` TypeScript tipleri |
+### `QuickEntryScreen.tsx` ← Ana giriş ekranı
+
+**Props:**
+```typescript
+{
+  nameInput: string;
+  setNameInput: (v: string) => void;
+  nameInputRef: React.RefObject<TextInput | null>;
+  canStart: boolean;        // nameInput.trim().length >= 2
+  handleStart: () => void;  // setUsername(name) → router.replace("/(tabs)")
+  onBack: () => void;       // step = "intro"'ya döner
+}
+```
+
+**Düzen (koyu siber tema, `#070B14` bg):**
+- Geri butonu
+- Kalkan logosu + neon mavi glow halkası
+- "Kod Adını Seç, Ajan" başlığı
+- TextInput — neon mavi kenarlık `canStart` true iken
+- **"Hızlı Giriş (Anonim)"** butonu (`#2B7FFF`, `canStart` false iken soluk)
+- "Hesap oluşturmadan, kaydedilmez" küçük notu
+- "veya" divider
+- Google mock butonu (opacity 0.65, "Yakında" etiketi)
+- Apple mock butonu (opacity 0.65, "Yakında" etiketi)
+- XP / Seri / Rozet feature pill'leri
+
+### `IntroSlides.tsx`
+
+**Props:** `{ onFinish: () => void }`
+
+3 kaydırmalı slayt. Yatay `FlatList` + `pagingEnabled`. "Atla" butonu + "Devam Et"/"Göreve Başla" CTA. `useSafeAreaInsets` ile notch uyumlu.
+
+### `OnboardingLogo.tsx`
+
+**Props:** `{ delay?: number }`
+
+`GlowRing` + Feather kalkan ikonu. Tüm onboarding adımlarında paylaşımlı logo.
+
+### `GlowRing.tsx`
+
+Nabız atan animasyonlu ışık halkası (`withRepeat` + `withSequence`, Reanimated).
+
+### `ErrorBox.tsx`
+
+**Props:** `{ error: string | null }`
+
+Hata mesajı kutusu. `"✅"` öneki başarı mesajlarını ayırt eder (yeşil vs kırmızı).
+
+### `BackButton.tsx`
+
+Sol üst ok butonu. `{ onPress, color?, bgColor? }` props'larını alır.
+
+### `AuthScreen.tsx`
+
+Eski email/şifre ekranı — **aktif onboarding akışında kullanılmıyor.** Geriye dönük uyumluluk için dosya mevcut.
+
+### `NameStep.tsx`
+
+Eski bağımsız kod adı adımı — **aktif onboarding akışında kullanılmıyor.** QuickEntryScreen bu işlevi üstlendi.
+
+### `styles.ts`
+
+Tüm onboarding bileşenlerinin paylaşımlı `StyleSheet` nesnesi.
+
+### `types.ts`
+
+```typescript
+type Step = "intro" | "name" | "auth" | "email" | "phone" | "otp";
+type AuthProvider = "google" | "apple" | "email" | "phone";
+interface ProviderItem { id: AuthProvider; label: string; icon: string; color: string; }
+```
 
 ---
 
 ## `profile/` — Profil Ekranı Bileşenleri
 
-`app/(tabs)/profile.tsx` ince orkestratörüne hizmet eden bileşen grubu. Platform padding ve istatistik verileri `hooks/useProfile.ts`'de hesaplanır; bu bileşenler sadece render eder.
+`app/(tabs)/profile.tsx` ince orkestratörüne hizmet eden bileşen grubu.
 
-| Bileşen | Sorumluluğu |
-|---|---|
-| `ProfileInitials` | İsmin baş harflerinden oluşan daire avatar |
-| `ProfileHeader` | "Profil" başlığı + sağda "Düzenle" butonu |
-| `HeroCard` | Avatar, isim, bio, favori konu pill, `RankBadge`, `XPBar`, streak satırı |
-| `AnonBanner` | Misafir hesabı uyarısı; onboarding'e yönlendirir |
-| `StatsGrid` | `StatItem[]` alan 4'lü kart ızgarası (ikon, renk, değer, etiket) |
-| `RankPath` | `RANKS` + `userXp` + `rankIdx` alan yatay rütbe haritası |
-| `CertCard` | 800 XP eşiği ilerleme çubuğu + kazanılınca "✓" rozeti |
-| `SignOutButton` | Oturumu kapatma butonu (kırmızı, `log-out` ikonu) |
-| `styles.ts` | Tüm profil bileşenlerinin paylaşımlı `StyleSheet` nesnesi |
+| Bileşen | Props | Sorumluluğu |
+|---|---|---|
+| `ProfileInitials` | `{ username }` | İsmin baş harflerinden daire avatar |
+| `ProfileHeader` | `{ onEditPress }` | "Profil" başlığı + Düzenle butonu |
+| `HeroCard` | `{ username, bio, favoriteTopic, rank, nextRank, xp, xpProgress, streak }` | Avatar, isim, bio, konu, RankBadge, XPBar, streak |
+| `AnonBanner` | — | Misafir uyarısı — tıklanınca Alert gösterir; `isGuestMode === true` olduğunda profil'de görünür |
+| `StatsGrid` | `{ items: StatItem[], startDelay? }` | 4'lü istatistik kart ızgarası |
+| `RankPath` | `{ ranks, userXp, rankIdx, delay? }` | 5 rütkenin yatay haritası |
+| `CertCard` | `{ xp, delay? }` | 800 XP eşiği ilerleme çubuğu |
+| `SignOutButton` | `{ onSignOut, delay? }` | AsyncStorage silen çıkış butonu |
+| `styles.ts` | — | Paylaşımlı StyleSheet |
 
 ---
 
 ## `edit-profile/` — Profil Düzenleme Bileşenleri
 
-`app/edit-profile.tsx` ince orkestratörüne hizmet eden bileşen grubu. Form state ve kaydetme mantığı `hooks/useEditProfile.ts`'de.
+`app/edit-profile.tsx` ince orkestratörüne hizmet eden bileşen grubu.
 
 | Bileşen | Sorumluluğu |
 |---|---|
@@ -54,252 +112,104 @@ Tüm yeniden kullanılabilir UI parçaları `artifacts/mobile/components/` için
 | `EditProfileTopBar` | Geri butonu + "Profili Düzenle" başlığı + Kaydet butonu |
 | `UsernameField` | Input + kullanıcı ikonu + kilit rozeti + cooldown uyarı satırı |
 | `BioField` | Multiline textarea + `{n}/80` karakter sayacı |
-| `TopicsPicker` | 8 konuluk chip grid; `TOPICS` sabiti bu dosyada tanımlı |
+| `TopicsPicker` | 8 konuluk chip grid; `TOPICS` sabiti bu dosyada |
 | `InfoCard` | "Değişiklikler hemen kaydedilir" statik bilgi kartı |
 | `UsernameWarningModal` | 30 günlük cooldown modal'ı; kalan gün sayısı gösterir |
-| `styles.ts` | Tüm edit-profile bileşenlerinin paylaşımlı `StyleSheet` nesnesi |
+| `styles.ts` | Tüm edit-profile bileşenlerinin paylaşımlı StyleSheet |
 
 ---
 
-## Paylaşımlı Bileşenler
+## `lab/` — Haber Lab Bileşenleri
 
-## `SwipeCard.tsx` — Tinder-Stili Haber Kartı
+`app/(tabs)/lab.tsx` ve `hooks/useLabState.ts` ikilisine hizmet eden bileşenler.
 
-Vaka analizinin çekirdeği. Bir sosyal medya paylaşımını gerçekmiş gibi gösterir.
-
-### Props
-
-```typescript
-interface SwipeCardProps {
-  mission: Mission;
-  onSwipe: (direction: "left" | "right") => void;
-  hintsUsed: number;
-  onHintUse: () => void;
-}
-```
-
-### Gösterdiği Bilgiler
-
-- Hesap adı + `@handle`
-- Zaman damgası
-- Paylaşım metni
-- Beğeni / paylaşım sayısı
-- Platform etiketi: `Twitter` / `Instagram` / `WhatsApp` / `Haber` / `Telegram`
-- Varsa fotoğraf etiketi
-
-### Gesture Sistemi
-
-`react-native-gesture-handler`'ın `PanGesture`'ı kullanılır:
-- **Sağa sürükle** → "DOĞRU" etiketi (yeşil)
-- **Sola sürükle** → "YANLIŞ" etiketi (kırmızı)
-- Sürükleme sırasında kart eğilir ve etiket belirir
-- Bırakıldığında threshold'u geçmişse `onSwipe` callback tetiklenir
-
-### İpucu Sistemi
-
-Her basışta `hintsUsed` artırılır ve sıradaki ipucu gösterilir. Her ipucu -5 XP düşürür (`onHintUse` callback'i üst bileşen yönetir).
-
-### Responsive
-
-`useWindowDimensions` ile anlık genişlik okunur, inline ölçek hesabı:
-```typescript
-const _rScale = Math.min(Math.max(width / 390, 0.9), 1.2);
-const rfs = (base: number) => Math.round(base * _rScale);
-const rsp = (base: number) => Math.round(base * _rScale);
-```
-Post metni, hesap adı, ipucu yazıları ve buton padding'leri ölçeklenir.
-
-### Kritik Kısıtlama
-
-> Bu bileşeni asla bir `ScrollView` içine koymayın. Gesture çakışması yaşanır ve swipe çalışmaz. Bileşeni saran container `flex: 1` ve `justifyContent: "center"` kullanmalıdır.
-
----
-
-## `SimulationPlayer.tsx` — Simülasyon Oynatıcı
-
-Adım adım senaryo oyununu yöneten bileşen.
-
-### Props
-
-```typescript
-interface SimulationPlayerProps {
-  simulation: Simulation;
-  onComplete: (totalXP: number) => void;
-  onExit: () => void;
-}
-```
-
-### İki Tür Adım
-
-| Tür | Davranış |
-|---|---|
-| `narrative` | Sadece metin gösterilir, "Devam Et" butonu ile ilerle |
-| `choice` | 2–3 seçenek butonu; seçim sonrası doğru/yanlış renklendirme + açıklama; "Devam Et" ile ilerle |
-
-**Çoklu doğru:** Bir adımda birden fazla `isCorrect: true` seçenek olabilir.
-
-**XP toplama:** Her `choice` adımında seçilen seçeneğin `xpReward` değeri toplanır. Tüm adımlar bitince `onComplete(totalXP)` çağrılır.
-
-### Responsive
-
-`useResponsive` hook'u üst bileşenden geçirilir veya içeride kullanılır.
-
----
-
-## `CelebrationOverlay.tsx` — Kutlama/Hata Animasyonu
-
-Swipe sonrasında tam ekranı kaplayan anlık animasyon.
-
-### Props
-
-```typescript
-interface CelebrationOverlayProps {
-  visible: boolean;
-  correct: boolean;
-  subMessage?: string;
-  onDone: () => void;
-}
-```
-
-### Davranış
-
-- **Doğru:** Yeşil arka plan + "Doğru Tespit!" başlığı
-- **Yanlış:** Kırmızı arka plan + "Yanlış Tahmin" başlığı
-- `subMessage` ile ekstra açıklama eklenebilir (ör: kazanılan XP)
-- **2.3 saniye** sonra otomatik `onDone()` tetiklenir
-- Ekranın üstünde `SafeAreaView` ile konumlandırılmış toast stili (safe-area aware); eski tam ekran kaplamadan farklı
-- Giriş/çıkış Reanimated `FadeInDown` / `FadeOutUp` ile; `onDone` tetiklendikten 380ms sonra sonuç ekranı render edilir
-
----
-
-## `XPFloater.tsx` — Uçan XP Baloncuğu
-
-Ekranın ortasında beliren, yukarı doğru süzülüp kaybolan "+N XP" animasyonu.
-
-### Props
-
-```typescript
-interface XPFloaterProps {
-  amount: number;   // Gösterilecek XP miktarı (pozitif veya negatif)
-  onDone: () => void;
-}
-```
-
-Pozitif değerlerde yeşil/sarı, negatif değerlerde kırmızı renk kullanılır. Animasyon bitince `onDone()` çağrılır, üst bileşen görünürlüğü sıfırlar.
-
----
-
-## `XPBar.tsx` — Rütke İlerleme Çubuğu
-
-Mevcut rütke aralığındaki XP yüzdesini görsel çubuk olarak gösterir.
-
-### Props
-
-```typescript
-interface XPBarProps {
-  xp: number;
-  rank: Rank;
-  nextRank: Rank | null;
-}
-```
-
-- **Sol:** Mevcut rütke adı
-- **Sağ:** Bir sonraki rütke adı (son rütkedeyse "Maksimum")
-- **Çubuk doluluk oranı:** `(xp - rank.minXP) / (rank.maxXP - rank.minXP)`
-
----
-
-## `RankBadge.tsx` — Rütke Rozeti
-
-Rütkeyi ikon + isim + renkli arka planla gösterir.
-
-### Props
-
-```typescript
-interface RankBadgeProps {
-  rank: Rank;
-  size?: "sm" | "md";
-}
-```
-
-| Boyut | Kullanım yeri |
-|---|---|
-| `sm` (küçük) | Karargah header'ı |
-| `md` (orta) | Profil hero kartı |
-
-Her rütkenin kendine özgü rengi var (Çaylak=gri, Araştırmacı=yeşil, Analist=mavi, Kıdemli=mor, Baş Dedektif=turuncu).
-
----
-
-## `BadgeCard.tsx` — Rozet Kartı
-
-Akademi ekranının "Rozetler" sekmesinde kullanılır. 2 sütunlu ızgarada gösterilir.
-
-### Props
-
-```typescript
-interface BadgeCardProps {
-  badge: BadgeData;  // { id, name, description, icon, color, earned }
-}
-```
-
-- `earned: true` → Renkli ikon, tam opaklık
-- `earned: false` → Gri ikon, %40 opaklık, "Kilitli" overlay
-
----
-
-## `MissionCard.tsx` — Görev Kartı
-
-Haber Lab listesinde her görevi gösteren kart. İki modda çalışır.
-
-### Props
-
-```typescript
-interface MissionCardProps {
-  mission: Mission;
-  completed: boolean;
-  locked?: boolean;
-  compact?: boolean;
-  onPress: () => void;
-}
-```
-
-| Mod | Kullanım | İçerik |
+| Bileşen | Props | Sorumluluğu |
 |---|---|---|
-| Normal (`compact: false`) | Lab listesi | Görev tipi rozeti, zorluk, başlık, açıklama, kategori, XP |
-| Compact (`compact: true`) | Karargah yatay listesi | Başlık + zorluk + XP |
-
-**Tamamlanmış görevler:** Yeşil kenarlık + yeşil tik ikonu + %70 opaklık.
-
-**Görev tipi ikonları:** `photo`=resim, `headline`=metin, `quote`=mesaj, `stats`=grafik, `video`=video
-
-**Zorluk renkleri:** 1=yeşil (Kolay), 2=turuncu (Orta), 3=kırmızı (Zor)
+| `ActiveMissionView` | `{ activeMission, topPadding, bottomInset, celebVisible, ...handlers }` | Aktif görev görünümü: sabit header + SwipeCard alanı |
+| `MissionResultView` | `{ activeMission, lastCorrect, lastXP, topPadding, bottomInset, ...handlers }` | Sonuç ekranı: başarı/başarısızlık + XP + açıklama + aksiyon butonları |
+| `VakalarTab` | `{ pendingMissions, completedMissions, onStartMission }` | Bekleyen/tamamlanan görev listesi |
+| `SimulasyonTab` | `{ simulations, completedSims, onStartSim }` | Simülasyon kart listesi |
+| `LabTabButton` | `{ label, icon, active, onPress }` | "Vaka Analizi" / "Simülasyon" sekme butonu |
+| `labStyles.ts` | — | Tüm lab bileşenlerinin paylaşımlı StyleSheet |
 
 ---
 
-## `ErrorBoundary.tsx` — Global Hata Yakalayıcı
+## `swipe/` — SwipeCard Alt Bileşenleri
 
-React class component tabanlı hata sınırı.
+`SwipeCard.tsx` orkestratörüne hizmet eden parçalar.
 
-Uygulama herhangi bir yerde beklenmedik çökme yaşarsa beyaz ekran yerine `ErrorFallback` bileşenini render eder. `getDerivedStateFromError` ile hatayı yakalar, isteğe bağlı `onError` callback'i destekler.
-
----
-
-## `ErrorFallback.tsx` — Hata Ekranı UI'ı
-
-`ErrorBoundary` aktifleşince gösterilen ekran.
-
-- **Kullanıcı görür:** "Something went wrong" + "Try Again" butonu
-- **Geliştirici görür (sadece dev modunda):** "!" ikonu → tıklanınca hata mesajı + stack trace modal
-- "Try Again" → `expo`'nun `reloadAppAsync()` ile uygulamayı yeniden başlatır
+| Bileşen/Dosya | Sorumluluğu |
+|---|---|
+| `useSwipeGesture.ts` | `PanResponder` tabanlı sürükleme; threshold aşılınca `onVerdictSelected` çağırır; −5 XP ceza animasyonu |
+| `SwipeOverlays.tsx` | "DOĞRU"/"YANLIŞ" overlay etiketleri + kilit damgası (tüm karta yayılan) |
+| `PostContent.tsx` | Platform çubuğu, gönderi avatar+isimleri, post metni, medya etiketi, istatistikler |
+| `CluesArea.tsx` | `clues[0..clueIndex]` arasındaki ipuçlarını listeler |
+| `VerdictButtons.tsx` | "İpucu Al" (−5 XP) + "YANLIŞ" (kırmızı) + "DOĞRU" (yeşil) butonları |
+| `swipeCardStyles.ts` | StyleSheet |
+| `swipeConstants.ts` | `PLATFORM_ICONS`, `PLATFORM_COLORS`, `SWIPE_THRESHOLD` |
 
 ---
 
-## `KeyboardAwareScrollViewCompat.tsx` — Klavye Uyumlu Scroll
+## `leaderboard/` — Liderlik Tablosu Bileşenleri
 
-Platform adaptörü.
+`app/leaderboard.tsx` ekranına hizmet eden bileşenler.
 
-- **Web'de:** `ScrollView` kullanır (KeyboardAwareScrollView web'de çalışmaz)
-- **Native'de:** `KeyboardAwareScrollView` kullanır
+| Bileşen/Dosya | Sorumluluğu |
+|---|---|
+| `PodiumCard.tsx` | İlk 3 oyuncunun podyum görünümü (FlatList header olarak kullanılır) |
+| `LeaderRow.tsx` | Tek bir oyuncu satırı (FadeIn animasyonlu giriş, sıra numarası, XP, streak) |
+| `LeaderboardStates.tsx` | `LoadingState` (spinner), `ErrorState` (wifi-off + tekrar dene), `EmptyState` |
+| `leaderboardHelpers.ts` | `getRankColor()`, `getRankName()`, `MEDAL_CONFIG` (🥇🥈🥉 renkleri) |
+| `leaderboardStyles.ts` | StyleSheet |
 
-Klavye açıldığında içeriğin klavye üstünde kalmasını sağlar. İki platform arasındaki API farkını gizler, üst bileşenler platform kontrolü yazmak zorunda kalmaz.
+---
+
+## `home/` — Karargah Bileşenleri
+
+`app/(tabs)/index.tsx` ekranına hizmet eden bileşenler.
+
+| Bileşen/Dosya | Sorumluluğu |
+|---|---|
+| `StreakCard.tsx` | Günlük seri sayısı; seri 0'sa motivasyon mesajı; bugün oynanmamışsa çalkalama animasyonu |
+| `XPProgressCard.tsx` | `XPBar` + mevcut rütke adı + bir sonraki rütkeye kalan XP |
+| `StatsRow.tsx` | 3 istatistik kutusu (çözülen vaka / doğruluk % / toplam XP), sıralı FadeIn |
+| `DailyMissionCard.tsx` | Tamamlanmamış ilk misyon; bugün oynanmamışsa "2× XP" rozeti; `PulseDot` mavi nokta |
+| `ActiveMissionsList.tsx` | Yatay kaydırmalı misyon kartları (max 4); "Tümüne Bak" → lab sekmesi |
+| `StreakBonusToast.tsx` | Giriş streak bonusu ("+10 XP") toast bildirimi; FlatList header olarak |
+| `PulseDot.tsx` | Animasyonlu nabız noktası (Reanimated `withRepeat`) |
+| `missionHelpers.ts` | `diffColor()`, `diffLabel()`, `TYPE_ICONS` sabit haritası |
+| `homeStyles.ts` | StyleSheet |
+
+---
+
+## `simulation/` — SimulationPlayer Alt Bileşenleri
+
+`SimulationPlayer.tsx` orkestratörüne hizmet eden parçalar.
+
+| Bileşen/Dosya | Sorumluluğu |
+|---|---|
+| `NarrativeStep.tsx` | Anlatı adımı kartı (metin + ikon) |
+| `ChoiceStep.tsx` | Seçim adımı; seçimden sonra doğru/yanlış açıklaması gösterir |
+| `AnimatedChoiceButton.tsx` | Seçildikten sonra doğru/yanlış renge geçen animasyonlu buton |
+| `SimTopBar.tsx` | X (kapat) butonu + ilerleme çubuğu |
+| `SimContinueBar.tsx` | "Devam Et" / "Sonraki" butonu barı (ekrana sabitli) |
+| `SimDoneScreen.tsx` | Simülasyon tamamlama ekranı (XP göstergesi + çıkış) |
+| `simStyles.ts` | StyleSheet |
+
+---
+
+## Paylaşımlı Bileşenler (kök `components/`)
+
+| Bileşen | Sorumluluğu |
+|---|---|
+| `SwipeCard.tsx` | **Orkestratör** — `useSwipeGesture` + `SwipeOverlays` + `PostContent` + `CluesArea` + `VerdictButtons`. Kart max yüksekliği `Math.min(height - reservedPx, height * 0.52)` |
+| `SimulationPlayer.tsx` | **Orkestratör** — adım adım senaryo oynatıcı (~170 satır) |
+| `CelebrationOverlay.tsx` | Doğru/yanlış toast animasyonu. `absoluteFillObject` + safe-area padding (`Math.max(insets.top, 56) + 20`). Reanimated ile giriş/çıkış. |
+| `XPFloater.tsx` | Uçan "+N XP" balonu — karar sonrası yukarı kayarak solar |
+| `XPBar.tsx` | Rütke XP ilerleme çubuğu (animasyonlu dolum) |
+| `RankBadge.tsx` | Rütke ikon+isim rozeti; `size: "sm" | "md"` |
+| `BadgeCard.tsx` | Rozet kartı; `earned: true` ise renkli, false ise gri |
+| `MissionCard.tsx` | Görev listesi kartı; `compact` prop ile kısa sürüm |
+| `ErrorBoundary.tsx` | Global hata yakalayıcı (class component) |
+| `ErrorFallback.tsx` | Hata ekranı UI'ı (`ErrorDetailsModal` DEV'de açılır) |
+| `KeyboardAwareScrollViewCompat.tsx` | Web/native klavye scroll adaptörü |
