@@ -167,3 +167,6 @@ overrides:
   "@babel/core": "^7.29.7"
   # security: fix GHSA-6v5v-wf23-fmfq (markdown-it ReDoS — affects <14.2.0)
   markdown-it: "^14.2.0"
+
+allowBuilds:
+  esbuild: true
