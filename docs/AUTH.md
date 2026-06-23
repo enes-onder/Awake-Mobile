@@ -1,6 +1,6 @@
 # Kimlik Doğrulama Sistemi — Doğruluk Dedektifi
 
-Uygulama **Supabase kullanmaz.** Auth tamamen yerel cihaz tabanlıdır: kullanıcı bir "kod adı" seçer, bu isim `AsyncStorage`'a kaydedilir ve her açılışta buradan yüklenir.
+Uygulama harici bir kimlik doğrulama servisi (OAuth, JWT vb.) kullanmaz. Auth tamamen yerel cihaz tabanlıdır: kullanıcı bir "kod adı" seçer, bu isim `AsyncStorage`'a kaydedilir ve her açılışta buradan yüklenir.
 
 ---
 
@@ -122,7 +122,7 @@ Bu çağrı başarısız olursa sessizce görmezden gelinir (offline öncelikli 
 
 | Konu | Durum |
 |---|---|
-| Supabase / OAuth / JWT | Yok — uygulama bu sistemleri kullanmaz |
+| OAuth / JWT / harici kimlik servisi | Yok — uygulama bu sistemleri kullanmaz |
 | Kullanıcı kimliği | Yalnızca cihazda `AsyncStorage`'da; sunucuyla paylaşılmaz |
 | `POST /api/profiles/upsert` ownership kontrolü | Yok — herkes herhangi kullanıcı adıyla profil güncelleyebilir |
 | XP sunucu tarafı doğrulaması | Yok — istemciden gönderilen değer doğrudan kaydedilir |

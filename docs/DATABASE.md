@@ -148,4 +148,4 @@ Bu sayede internet bağlantısı olmasa da uygulama tam işlevsel çalışır.
 
 ## Veritabanı Kaynağı
 
-Aktif veritabanı kaynağı Drizzle şemasıdır: `lib/db/src/schema/index.ts`. Eski Supabase SQL artefaktı kaldırılmıştır.
+Aktif veritabanı kaynağı Drizzle şemasıdır: `lib/db/src/schema/index.ts`.

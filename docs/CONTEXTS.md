@@ -8,7 +8,7 @@ Uygulama durumu iki React Context ile yönetilir. Her ikisi de `artifacts/mobile
 
 Uygulamadaki en kritik dosya. Kullanıcının tüm oyun ilerlemesini ve yerel profil bilgisini yönetir.
 
-> **Mimari not:** Uygulama **Supabase kullanmaz**. Auth, kullanıcının girdiği "kod adı" tabanlıdır; tüm veriler `AsyncStorage`'da saklanır. Backend (`api-server`) yalnızca liderlik tablosu senkronizasyonu için kullanılır.
+> **Mimari not:** Uygulama harici kimlik doğrulama servisi kullanmaz. Auth, kullanıcının girdiği "kod adı" tabanlıdır; tüm veriler `AsyncStorage`'da saklanır. Backend (`api-server`) yalnızca liderlik tablosu senkronizasyonu için kullanılır.
 
 ### Sağladığı Değerler
 
