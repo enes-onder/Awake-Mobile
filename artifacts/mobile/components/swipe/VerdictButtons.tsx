@@ -37,6 +37,9 @@ export function VerdictButtons({
             <TouchableOpacity
               onPress={onUseClue}
               style={[styles.hintBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+              accessibilityRole="button"
+              accessibilityLabel={`İpucu al (${clueCount - clueIndex} kalan)`}
+              accessibilityHint="Bu vaka için bir ipucu açar, −5 XP düşer"
             >
               <Feather name="search" size={14} color={colors.primary} />
               <Text style={[styles.hintText, { color: colors.primary }]}>
@@ -70,6 +73,9 @@ export function VerdictButtons({
           ]}
           onPress={onVerdictFake}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Sahte olarak işaretle"
+          accessibilityHint="Bu vakadaki içeriğin sahte olduğuna karar ver"
         >
           <Feather name="x" size={20} color={colors.fake} />
           <Text style={[styles.verdictBtnText, { color: colors.fake }]}>YANLIŞ</Text>
@@ -86,6 +92,9 @@ export function VerdictButtons({
           ]}
           onPress={onVerdictReal}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Gerçek olarak işaretle"
+          accessibilityHint="Bu vakadaki içeriğin gerçek olduğuna karar ver"
         >
           <Feather name="check" size={20} color={colors.real} />
           <Text style={[styles.verdictBtnText, { color: colors.real }]}>DOĞRU</Text>

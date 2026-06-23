@@ -52,6 +52,10 @@ export function MissionCard({
           opacity: completed ? 0.7 : 1,
         },
       ]}
+      accessibilityRole="button"
+      accessibilityLabel={mission.title}
+      accessibilityHint={completed ? "Bu vaka tamamlandı" : "Bu vakayı çözmek için aç"}
+      accessibilityState={{ disabled: completed }}
     >
       <View style={styles.header}>
         <View

@@ -21,6 +21,9 @@ export function SignOutButton({ onSignOut, delay = 380 }: SignOutButtonProps) {
         style={[styles.signOutBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={onSignOut}
         activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityLabel="Çıkış yap"
+        accessibilityHint="Hesabından çıkış yapar"
       >
         <Feather name="log-out" size={16} color={colors.fake} />
         <Text style={[styles.signOutText, { color: colors.fake }]}>Çıkış Yap</Text>

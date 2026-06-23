@@ -87,6 +87,9 @@ export default function ProfileScreen() {
           style={[leaderboardStyles.card, { backgroundColor: colors.card, borderColor: "#FFD700" + "44" }]}
           onPress={() => router.push("/leaderboard")}
           activeOpacity={0.82}
+          accessibilityRole="button"
+          accessibilityLabel="Liderlik Tablosu"
+          accessibilityHint="Tüm oyuncular arasındaki sıralamana gitmek için dokun"
         >
           <View style={[leaderboardStyles.iconBox, { backgroundColor: "#FFD700" + "18" }]}>
             <Text style={leaderboardStyles.trophy}>🏆</Text>

@@ -157,6 +157,9 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
               borderRadius: r.sp(14),
             }}
             onPress={onExit}
+            accessibilityRole="button"
+            accessibilityLabel="Haber labına dön"
+            accessibilityHint="Simülasyonu kapatır ve haber labına döner"
           >
             <Text style={{ fontFamily: "Inter_700Bold", fontSize: r.fs(16), color: "#fff" }}>
               Devam Et
@@ -183,6 +186,9 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
               alignItems: "center",
               justifyContent: "center",
             }}
+            accessibilityRole="button"
+            accessibilityLabel="Simülasyondan çık"
+            accessibilityHint="Simülasyonu kapatır ve haber labına döner"
           >
             <Feather name="x" size={r.sp(18)} color={colors.foreground} />
           </TouchableOpacity>
@@ -243,6 +249,9 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
             }}
             onPress={handleContinue}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={stepIdx < simulation.steps.length - 1 ? "Devam et" : "Simülasyonu bitir"}
+            accessibilityHint={stepIdx < simulation.steps.length - 1 ? "Bir sonraki adıma geçer" : "Simülasyonu tamamlar ve sonucu gösterir"}
           >
             <Text style={{ fontFamily: "Inter_700Bold", fontSize: r.fs(16), color: "#fff" }}>
               {stepIdx < simulation.steps.length - 1 ? "Devam Et" : "Bitir"}

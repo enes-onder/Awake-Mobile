@@ -24,6 +24,9 @@ export function ProfileHeader({ onEditPress }: ProfileHeaderProps) {
         style={[styles.editBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
         onPress={onEditPress}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel="Profili düzenle"
+        accessibilityHint="Profil düzenleme ekranını açar"
       >
         <Feather name="edit-2" size={14} color={colors.foreground} />
         <Text style={[styles.editBtnText, { color: colors.foreground }]}>Düzenle</Text>

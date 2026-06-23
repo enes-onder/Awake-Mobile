@@ -68,6 +68,10 @@ export function AnimatedChoiceButton({
       onPress={() => !answered && onPress(choice.id)}
       disabled={answered}
       activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={`Seçenek ${index + 1}: ${choice.text}`}
+      accessibilityHint="Bu seçeneği simülasyon cevabı olarak seçer"
+      accessibilityState={{ selected, disabled: answered }}
     >
       <Text
         style={[
