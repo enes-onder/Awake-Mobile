@@ -1,220 +1,84 @@
 # 🔍 Doğruluk Dedektifi
 
-> Dezenformasyona karşı silahlan. Sahte haberleri tespit etmeyi öğreten Türkçe mobil oyun.
-
-Doğruluk Dedektifi; kullanıcıların sosyal medya paylaşımlarını analiz ettiği, senaryo simülasyonları oynadığı ve dezenformasyon farkındalığı kazandığı eğitici bir mobil oyundur. Expo (React Native) ile geliştirilmiş olup Android, iOS ve web tarayıcısında çalışır.
+> Dezenformasyona karşı silahlan. Sahte haberleri tespit etmeyi öğreten Türkçe mobil eğitim oyunu.
 
 ---
 
-## 📱 Özellikler
+## Kısa Tanım
 
-- **Haber Lab** — Gerçek/sahte karar verme (swipe kartlar) + ipucu sistemi
-- **Simülasyon** — Adım adım gerçek hayat senaryoları (WhatsApp mesajı, sahte alıntı, kriz anı)
-- **Akademi** — 6 ders + quiz'ler; sıralı kilit sistemi
-- **Profil & Liderlik Tablosu** — XP sistemi, 5 rütbe kademesi, 8 rozet, günlük seri takibi; profil ve ilerleme cihazda AsyncStorage'da tutulur, topluluk liderlik tablosu için backend'e senkronize edilir
-- **Yerel Auth** — Kod adı tabanlı hızlı giriş; tüm ilerleme cihazda AsyncStorage'da saklanır
-- **Offline Mod** — API sunucusuna bağlanamazsan yerel yedek veri devreye girer
-- Karanlık tema, haptic geri bildirim, responsive tasarım (telefon + tablet)
-
-> **Liderlik tablosu hakkında:** Puanlar, kullanıcının cihazından gönderilen XP değerlerine dayanır. Sunucu bu değerleri bağımsız olarak doğrulamaz. Bu nedenle liderlik tablosu **topluluk/demo** amaçlıdır; hileye dayanıklı rekabetçi skor sistemi değildir. Detaylar için bkz. [`docs/AUTH.md`](docs/AUTH.md).
+**Doğruluk Dedektifi**, kullanıcıların sosyal medya paylaşımlarını analiz ettiği, senaryo simülasyonları oynadığı ve medya okuryazarlığı kazandığı eğitici bir mobil oyundur. Expo (React Native) ile geliştirilmiş olup Android, iOS ve web tarayıcısında çalışır.
 
 ---
 
-## 📚 Belgeler
+## Problem
 
-| Konu | Dosya |
+Türkiye'de ve dünyada dezenformasyon hızla yayılmakta; vatandaşlar sahte haber ile gerçek haberi ayırt etmekte zorlanmaktadır. Mevcut farkındalık içerikleri çoğunlukla pasif okuma biçiminde sunulmakta, etkileşimli ve ölçülebilir bir öğrenme deneyimi sunmamaktadır.
+
+---
+
+## Hedef Kitle
+
+- Medya okuryazarlığını geliştirmek isteyen gençler ve yetişkinler
+- Dijital haberleri sık tüketen sosyal medya kullanıcıları
+- Dezenformasyon farkındalığı üzerine eğitim veren öğretmenler ve eğitmenler
+- Sivil toplum kuruluşları ve basın özgürlüğü alanında çalışan kuruluşlar
+
+---
+
+## Ürün Ne İşe Yarar
+
+Doğruluk Dedektifi, oyunlaştırılmış öğrenme döngüsü üzerine kuruludur:
+
+1. **Giriş** — Kullanıcı bir kod adı seçerek uygulamaya başlar; hesap oluşturmaya veya kişisel bilgi vermeye gerek yoktur.
+2. **Vaka Analizi** — Gerçek sosyal medya senaryolarından uyarlanan haberler kartlara yansıtılır. Kullanıcı sola/sağa kaydırarak "Sahte" veya "Gerçek" kararı verir; dilerse ipucu satın alabilir.
+3. **Simülasyon** — WhatsApp mesajı, siyasetçi alıntısı, kriz anı gibi gerçekçi senaryolarda adım adım karar alınır.
+4. **Akademi** — 6 modüllük ders içeriği (tersine görsel arama, metadata analizi, kaynak doğrulama vb.) ve her modülün sonunda kısa quiz.
+5. **İlerleme** — Doğru kararlar XP kazandırır; XP arttıkça rütbe yükselir, rozetler açılır, günlük seri takip edilir.
+6. **Liderlik Tablosu** — Topluluk genelinde XP sıralaması.
+
+---
+
+## Ana Özellikler
+
+| Özellik | Açıklama |
 |---|---|
-| Giriş yöntemleri, auth akışı, OAuth kurulumu | [`docs/AUTH.md`](docs/AUTH.md) |
-| Responsive tasarım, `useResponsive` hook | [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md) |
-| XP, rütbe, rozet, streak sistemi | [`docs/GAME_MECHANICS.md`](docs/GAME_MECHANICS.md) |
-| Drizzle/Replit PostgreSQL şeması, tablolar, seed data | [`docs/DATABASE.md`](docs/DATABASE.md) |
-| Her ekranın detaylı açıklaması | [`docs/SCREENS.md`](docs/SCREENS.md) |
-| Her bileşenin props ve davranış açıklaması | [`docs/COMPONENTS.md`](docs/COMPONENTS.md) |
-| UserContext ve ContentContext detayları | [`docs/CONTEXTS.md`](docs/CONTEXTS.md) |
-| Kod tabanı haritası (klasör/dosya açıklamaları) | [`CODEBASE.md`](CODEBASE.md) |
+| **Haber Lab** | Gerçek/sahte karar (swipe) + 3 aşamalı ipucu sistemi |
+| **Simülasyon** | Adım adım senaryo oynatıcı (WhatsApp, sahte alıntı, kriz anı) |
+| **Akademi** | 6 ders + quiz; sıralı kilit sistemi |
+| **XP & Rütbe** | Çaylak → Araştırmacı → Analist → Kıdemli Analist → Baş Dedektif |
+| **8 Rozet** | Özel başarı koşullarıyla açılan kalıcı rozetler |
+| **Günlük Seri** | Her gün oynamak streak sayısını artırır |
+| **Liderlik Tablosu** | XP tabanlı topluluk sıralaması |
+| **Offline Mod** | API erişilemezse yerel yedek içerik devreye girer |
+| **Çoklu Platform** | Android, iOS ve web tarayıcısı desteği |
+
+> **Not:** Kullanıcı adı ve oyun ilerleme verisi cihazda (`AsyncStorage`) saklanır; liderlik tablosu için arka uca senkronize edilir. Liderlik tablosu topluluk/demo amaçlıdır; XP değerleri istemci tarafından gönderildiğinden hileye dayanıklı rekabetçi bir skor sistemi değildir. Detaylar için bkz. [`docs/AUTH.md`](docs/AUTH.md).
 
 ---
 
-## 🗂️ Proje Yapısı
+## Uygulama Akışı
 
 ```
-dogruluk-dedektifi/
-├── artifacts/
-│   ├── mobile/                    ← Ana uygulama (Expo / React Native)
-│   │   ├── app/                   ← Expo Router ekranları (dosya adı = route)
-│   │   │   ├── _layout.tsx        ← Kök düzen, NavController, provider'lar
-│   │   │   ├── onboarding.tsx     ← /onboarding — ince orkestratör (~80 satır)
-│   │   │   ├── edit-profile.tsx   ← /edit-profile — ince orkestratör (~65 satır)
-│   │   │   └── (tabs)/            ← Sekme ekranları (index, lab, academy, profile)
-│   │   │
-│   │   ├── components/            ← Single Responsibility bileşenler
-│   │   │   ├── onboarding/        ← AuthStep, EmailStep, PhoneStep, OtpStep, NameStep + yardımcılar
-│   │   │   ├── edit-profile/      ← EditProfileTopBar, UsernameField, BioField, TopicsPicker + yardımcılar
-│   │   │   └── *.tsx              ← Paylaşımlı bileşenler (SwipeCard, XPBar, MissionCard vb.)
-│   │   │
-│   │   ├── hooks/                 ← Custom hook'lar
-│   │   │   ├── useOnboardingAuth.ts ← Yerel kod adı auth state + onboarding akışı
-│   │   │   ├── useEditProfile.ts    ← Profil form state + kaydetme mantığı
-│   │   │   ├── useResponsive.ts     ← Responsive tasarım hesapları
-│   │   │   └── useColors.ts         ← Renk sistemi
-│   │   │
-│   │   ├── context/               ← UserContext (auth + oyun), ContentContext (içerik)
-│   │   ├── data/                  ← Offline yedek içerik (vakalar, dersler, simülasyonlar)
-│   │   ├── constants/             ← Renk paleti
-│   │   └── lib/                   ← API istemcisi
-│   │
-│   └── api-server/                ← Express.js REST API (altyapı hazır)
-│
-├── lib/                     ← Paylaşılan kütüphaneler (Drizzle, Zod, React Query)
-├── docs/                    ← Özellik belgelemeleri
-└── package.json
+Uygulama açılır
+    ↓
+Kullanıcı adı kayıtlı mı? (AsyncStorage)
+    ├── HAYIR → Onboarding (tanıtım slaytları → kod adı girişi)
+    └── EVET  → Ana uygulama
+         ↓
+ContentContext → Express API'den içerik çek
+    ├── Başarılı → API verisi kullanılır
+    └── Başarısız → data/*.ts yerel yedeklere geçilir
+         ↓
+Kullanıcı oynar (Lab / Akademi / Simülasyon)
+    ↓
+XP & ilerleme → AsyncStorage'a kaydedilir
+    ↓
+Liderlik tablosu → POST /api/profiles/upsert ile senkronize edilir
 ```
-
-**Mimari ilke:** Her dosyanın tek sorumluluğu var. Ekran dosyaları (`app/*.tsx`) yalnızca routing yapar; iş mantığı hook'larda, UI hook'lardan bağımsız bileşenlerde yaşar.
 
 ---
 
-## ⚙️ Gereksinimler
-
-| Yazılım | Minimum | İndirme |
-|---|---|---|
-| **Node.js** | v20+ | https://nodejs.org |
-| **pnpm** | v9+ | `npm install -g pnpm` |
-
-> ⚠️ Bu proje **yalnızca pnpm** destekler. `npm install` veya `yarn` çalışmaz.
-
-**Mobil test için (isteğe bağlı):**
-
-| Hedef | Gerekli |
-|---|---|
-| Android | [Android Studio](https://developer.android.com/studio) |
-| iPhone (fiziksel) | [Expo Go](https://expo.dev/go) (App Store'dan ücretsiz) |
-| iPhone simülatör | macOS + Xcode |
-| Web | Sadece Chrome/Firefox yeterli |
-
----
-
-## 🚀 Kurulum
-
-### 1. Repoyu İndir
-
-```bash
-git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
-cd dogruluk-dedektifi
-```
-
-### 2. Bağımlılıkları Yükle
-
-```bash
-pnpm install
-```
-
-### 3. Veritabanını Kur (İlk Kez)
-
-Replit Secrets panelinde `DATABASE_URL` tanımlanmış olmalıdır (Replit PostgreSQL otomatik sağlar).
-
-```bash
-pnpm --filter @workspace/db run push
-pnpm --filter @workspace/db run seed
-```
-
-Detaylı bilgi için → [`docs/DATABASE.md`](docs/DATABASE.md)
-
-### 4. Uygulamayı Başlat
-
-```bash
-pnpm --filter @workspace/mobile run dev
-```
-
-Expo QR kodu çıkınca:
-
-| Platform | Ne Yapacaksın |
-|---|---|
-| Web | `w` tuşuna bas veya `localhost:PORT` aç |
-| Android telefon | Expo Go'yu kur, QR kodu tara |
-| iPhone | Kamerayı QR koda tut → linke tıkla |
-| Android emülatör | `a` tuşuna bas |
-| iOS simülatör | `i` tuşuna bas (Mac + Xcode gerekli) |
-
----
-
-## 🖥️ İşletim Sistemine Göre Kurulum
-
-### Windows
-
-```powershell
-# Node.js: https://nodejs.org → LTS indir → .msi kur
-npm install -g pnpm
-node --version   # v20+ olmalı
-pnpm --version   # v9+ olmalı
-
-git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
-cd dogruluk-dedektifi && pnpm install
-pnpm --filter @workspace/mobile run dev
-```
-
-**Android emülatörü (Windows) — Adım Adım:**
-
-1. **Java JDK 17** kur: https://adoptium.net → `Temurin 17 (LTS)` seç → `.msi` kur
-2. **Android Studio** indir + kur: https://developer.android.com/studio
-   - Kurulumda "Android Virtual Device" seçeneğini işaretle
-3. **SDK kurulumu:** Android Studio → `More Actions → SDK Manager`
-   - `SDK Platforms` sekmesi → **Android 14 (API 34)** işaretle → Apply
-   - `SDK Tools` sekmesi → **Android SDK Build-Tools**, **Android Emulator**, **Android SDK Platform-Tools** işaretle → Apply
-4. **Ortam değişkenleri** ekle (Sistem Özellikleri → Gelişmiş → Ortam Değişkenleri):
-   ```
-   ANDROID_HOME = C:\Users\<KULLANICI_ADIN>\AppData\Local\Android\Sdk
-   ```
-   Aynı pencerede `Path` değişkenine ekle:
-   ```
-   %ANDROID_HOME%\platform-tools
-   %ANDROID_HOME%\emulator
-   ```
-5. **Sanal cihaz oluştur:** Android Studio → `More Actions → Virtual Device Manager → Create Device`
-   - Pixel 7 → API 34 → Finish
-6. **Emülatörü başlat** (Virtual Device Manager'dan oynat düğmesi)
-7. Expo çalışırken terminalde `a` tuşuna bas → uygulama emülatöre yüklenir
-
-### Linux (Ubuntu / Debian)
-
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-source ~/.bashrc && nvm install 24
-npm install -g pnpm
-sudo apt-get install git -y
-
-git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
-cd dogruluk-dedektifi && pnpm install
-pnpm --filter @workspace/mobile run dev
-```
-
-### macOS
-
-```bash
-brew install node@24
-npm install -g pnpm
-
-git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
-cd dogruluk-dedektifi && pnpm install
-pnpm --filter @workspace/mobile run dev
-```
-
-iOS simülatörü için: Mac App Store'dan **Xcode**'u kur, bir kez aç, Expo çalışırken `i` bas.
-
----
-
-## 🔧 Ortam Değişkenleri
-
-| Yer | Değişken | Açıklama |
-|---|---|---|
-| Replit Secrets | `DATABASE_URL` | PostgreSQL bağlantı dizesi (Replit otomatik tanımlar) |
-| `artifacts/api-server/.env` | `PORT` | API sunucu portu (varsayılan: 8080) |
-
-> `EXPO_PUBLIC_API_URL` tanımlanmazsa mobil uygulama yerel yedek içerikle çalışmaya devam eder.
-
----
-
-## 📦 Kullanılan Teknolojiler
+## Kullanılan Teknolojiler
 
 ### Mobil Uygulama
 
@@ -229,7 +93,6 @@ iOS simülatörü için: Mac App Store'dan **Xcode**'u kur, bir kez aç, Expo ç
 | `@expo/vector-icons` | Feather ikon seti |
 | `@expo-google-fonts/inter` | Inter yazı tipi |
 | `expo-haptics` | Dokunmatik titreşim |
-| `expo-glass-effect` | iOS 26+ LiquidGlass sekme çubuğu |
 
 ### API Sunucusu
 
@@ -239,56 +102,176 @@ iOS simülatörü için: Mac App Store'dan **Xcode**'u kur, bir kez aç, Expo ç
 | `pino` | Hızlı JSON loglama |
 | `zod` | Tip güvenli şema doğrulama |
 | `drizzle-orm` | TypeScript ORM |
+| `@neondatabase/serverless` | PostgreSQL bağlantısı |
+
+### Veritabanı
+
+**Replit PostgreSQL** — Drizzle ORM ile yönetilir. Şema konumu: `lib/db/src/schema/index.ts`. Detaylar için bkz. [`docs/DATABASE.md`](docs/DATABASE.md).
 
 ---
 
-## 🗺️ Yol Haritası
+## Kurulum
 
-- [x] Yerel kod adı tabanlı hızlı giriş (AsyncStorage)
-- [ ] Google / Apple OAuth entegrasyonu
-- [ ] Bulut tabanlı oyun verisi senkronizasyonu (AsyncStorage → sunucu)
-- [ ] Günlük haber API entegrasyonu (teyit.org vb.)
-- [ ] Çok oyunculu sıralama tablosu
-- [ ] Push bildirim sistemi
-- [ ] App Store / Google Play yayını
-- [ ] AI destekli yeni vaka üretimi
+### Gereksinimler
 
----
+| Yazılım | Minimum | İndirme |
+|---|---|---|
+| **Node.js** | v20+ | https://nodejs.org |
+| **pnpm** | v9+ | `npm install -g pnpm` |
 
-## ❓ Sık Karşılaşılan Sorunlar
+> ⚠️ Bu proje **yalnızca pnpm** destekler. `npm install` veya `yarn` çalışmaz.
 
-**`pnpm install` hata veriyor:**
-- `node --version` → v20+ olmalı
-- `npm install -g pnpm` ile yeniden kur
+### Adımlar
 
-**Expo başlıyor ama telefonda açılmıyor:**
-- Telefon ve bilgisayar aynı Wi-Fi ağında olmalı
-- Expo Go'nun güncel olduğundan emin ol
-
-**API sunucusuna bağlantı çalışmıyor:**
-- `DATABASE_URL` Replit Secrets'ta tanımlı olmalı
-- Bağlanamazsa uygulama yerel verilerle çalışmaya devam eder
-
-**Giriş ekranı çalışmıyor:**
-- Kod adı girişi tamamen yerel çalışır; herhangi bir dış servis gerekmez
-- Detaylı auth akışı → [`docs/AUTH.md`](docs/AUTH.md)
-
-**`npm install` veya `yarn` hata veriyor:**
-- Bu proje sadece `pnpm` destekler: `pnpm install` kullan
-
----
-
-## 🤝 Katkı
+#### 1. Repoyu İndir
 
 ```bash
-git checkout -b feature/yeni-ozellik
-git commit -m "feat: yeni özellik eklendi"
-git push origin feature/yeni-ozellik
-# Pull Request aç
+git clone https://github.com/KULLANICI_ADIN/dogruluk-dedektifi.git
+cd dogruluk-dedektifi
+```
+
+#### 2. Bağımlılıkları Yükle
+
+```bash
+pnpm install
+```
+
+#### 3. Veritabanını Kur (İlk Kez)
+
+`DATABASE_URL` ortam değişkeni tanımlı olmalıdır (Replit ortamında Secrets panelinden otomatik gelir).
+
+```bash
+pnpm --filter @workspace/db run push
+pnpm --filter @workspace/db run seed
+```
+
+Detaylı bilgi için → [`docs/DATABASE.md`](docs/DATABASE.md)
+
+---
+
+## Çalıştırma
+
+### API Sunucusunu Başlat
+
+```bash
+cd artifacts/api-server
+PORT=3001 node ./build.mjs && PORT=3001 node --enable-source-maps ./dist/index.mjs
+```
+
+### Mobil Uygulamayı Başlat
+
+```bash
+pnpm --filter @workspace/mobile run dev
+```
+
+Expo başladıktan sonra:
+
+| Platform | Ne Yapılır |
+|---|---|
+| Web | `w` tuşuna bas veya tarayıcıdan URL'yi aç |
+| Android telefon | Expo Go uygulamasını kur, QR kodu tara |
+| iPhone | Kamerayı QR koda tut → linke tıkla |
+| Android emülatör | `a` tuşuna bas |
+| iOS simülatör | `i` tuşuna bas (macOS + Xcode gerekli) |
+
+### Ortam Değişkenleri
+
+| Değişken | Zorunlu | Açıklama |
+|---|---|---|
+| `DATABASE_URL` | Evet (API için) | PostgreSQL bağlantı dizesi |
+| `PORT` | Hayır | API sunucu portu (varsayılan: 3001) |
+
+> `EXPO_PUBLIC_API_URL` **tanımlanmamalıdır.** Bundle, relative URL kullanır; web-proxy isteği doğru porta yönlendirir.
+
+---
+
+## Proje Yapısı
+
+```
+dogruluk-dedektifi/
+├── artifacts/
+│   ├── mobile/              ← Expo React Native uygulaması
+│   │   ├── app/             ← Expo Router ekranları
+│   │   ├── components/      ← UI bileşenleri (tek sorumluluk)
+│   │   ├── hooks/           ← İş mantığı hook'ları
+│   │   ├── context/         ← UserContext, ContentContext
+│   │   ├── data/            ← Offline yedek içerik
+│   │   └── lib/             ← API istemcisi
+│   └── api-server/          ← Express REST API
+├── lib/
+│   ├── db/                  ← Drizzle ORM şeması
+│   ├── api-spec/            ← OpenAPI tanımı
+│   └── api-zod/             ← Zod şemaları
+├── docs/                    ← Özellik belgeleri
+└── package.json
+```
+
+Kod tabanının tüm klasör/dosya haritası için → [`CODEBASE.md`](CODEBASE.md)
+
+---
+
+## Belgeler
+
+| Konu | Dosya |
+|---|---|
+| Giriş yöntemi, auth akışı, güven sınırları | [`docs/AUTH.md`](docs/AUTH.md) |
+| XP, rütbe, rozet, streak sistemi | [`docs/GAME_MECHANICS.md`](docs/GAME_MECHANICS.md) |
+| Drizzle/PostgreSQL şeması, tablolar, seed data | [`docs/DATABASE.md`](docs/DATABASE.md) |
+| Her ekranın ayrıntılı açıklaması | [`docs/SCREENS.md`](docs/SCREENS.md) |
+| Her bileşenin props ve davranış açıklaması | [`docs/COMPONENTS.md`](docs/COMPONENTS.md) |
+| UserContext ve ContentContext | [`docs/CONTEXTS.md`](docs/CONTEXTS.md) |
+| Responsive tasarım, `useResponsive` hook | [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md) |
+| Kod tabanı haritası | [`CODEBASE.md`](CODEBASE.md) |
+
+---
+
+## Final Teslim Notu
+
+Bu uygulama **Doğruluk Dedektifi** adıyla geliştirilmiş; medya okuryazarlığı ve dezenformasyon farkındalığı konusunda etkileşimli bir öğrenme aracı olarak tasarlanmıştır.
+
+**Teslim kapsamı:**
+
+- Expo React Native mobil uygulaması (Android, iOS, Web)
+- Express REST API + Drizzle ORM + PostgreSQL arka uç
+- Oyun mekaniği: XP, rütbe, rozet, streak, günlük çarpan, liderlik tablosu
+- 8 vaka, 6 ders, 3 simülasyon (veritabanı + offline yedek)
+- Cihaz tabanlı anonim giriş (AsyncStorage)
+- Offline öncelikli mimari (API erişilemezse yerel verilerle çalışır)
+
+**Teknik kararlar:**
+
+- Auth sunucu tarafı değil, cihaz tabanlıdır (kod adı + AsyncStorage). Liderlik tablosu topluluk/demo amaçlıdır.
+- İçerik kilitleme (XP kapısı) istemci tarafında hesaplanır; API yalnızca mount sırasında bir kez çağrılır.
+- Tüm XP güncellemeleri atomik olarak tek state yazımında yapılır; paralel çağrılardan kaynaklanan state kayması engellenmiştir.
+
+---
+
+## Test Kontrol Listesi
+
+Teslim öncesinde aşağıdaki akışların el ile doğrulanması önerilir:
+
+- [ ] Yeni kod adıyla giriş → Karargah ekranına yönlendirilme
+- [ ] İlk vakayı doğru çöz → XP balonu + profil XP artışı tutarlı
+- [ ] Aynı gün ikinci vakada XP çarpanı `×1` (ilkinde `×2` olmalı)
+- [ ] İpucu kullan → `-5 XP` net hesaba yansıyor
+- [ ] Yanlış cevap → negatif XP düşümü, vaka listede kalıyor
+- [ ] Gerçek haberi doğru işaretle → `fakesDetected` artmıyor
+- [ ] Ders tamamla → XP + tamamlanan ders listesi korunuyor
+- [ ] Simülasyonu tamamla → XP verildi, ikinci açılışta tekrar verilmiyor
+- [ ] Uygulamayı kapat/aç → tüm ilerleme korunuyor (AsyncStorage)
+- [ ] API sunucusu kapalıyken aç → offline yedek içerikle çalışıyor
+- [ ] Liderlik tablosu açılıyor → sıralama görünüyor (veya mock veri)
+- [ ] Profil düzenleme → kod adı cooldown, bio, favori konu kaydediliyor
+- [ ] Çıkış yap → onboarding'e dönüyor, ilerleme sıfırlanıyor
+
+### Tip Kontrolü
+
+```bash
+pnpm run typecheck
 ```
 
 ---
 
-## 📄 Lisans
+## Lisans
 
 MIT © 2026 — Doğruluk Dedektifi
