@@ -89,6 +89,12 @@ export function useLabState(): UseLabStateReturn {
 
   /** Aktif timer referansları — cleanup ve erken çıkış için tutulur */
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  /**
+   * Simülasyon tamamlanma kilidi — React state gecikmesinden bağımsız,
+   * senkron idempotency guard. completedSims state'i async güncellenirken
+   * hızlı çift çağrıda çifte earnXP'yi önler.
+   */
+  const completedSimsRef = useRef<Set<string>>(new Set());
 
   /** Tüm bekleyen timer'ları iptal eder ve listeyi temizler */
   const clearTimers = useCallback(() => {
@@ -241,11 +247,12 @@ export function useLabState(): UseLabStateReturn {
 
   /**
    * Simülasyon yarıda çıkılınca completedSims'e ekler (XP kazandırmaz).
-   * Böylece aynı simülasyon tekrar tekrar girilerek XP farmlanamazˌ
+   * Ref guard senkron olduğu için React state gecikmesinden bağımsız çalışır.
    */
   const handleSimExit = () => {
     const simId = activeSim;
-    if (simId && !completedSims.includes(simId)) {
+    if (simId && !completedSimsRef.current.has(simId)) {
+      completedSimsRef.current.add(simId);
       setCompletedSims((prev) => [...prev, simId]);
     }
     setActiveSim(null);
@@ -253,11 +260,12 @@ export function useLabState(): UseLabStateReturn {
 
   /**
    * Simülasyon tamamlandığında XP kazandırır ve listeye döner.
-   * Aynı simülasyon bir oturumda iki kez tamamlanamaz —
-   * completedSims kontrolü earnXP'den ÖNCE yapılır, çifte ödül engellenir.
+   * completedSimsRef senkron guard — React state henüz commit olmadan
+   * gelen ikinci çağrıyı (hızlı çift-tap) engeller ve çifte earnXP önler.
    */
   const handleSimComplete = (simId: string, xpEarned: number) => {
-    if (!completedSims.includes(simId)) {
+    if (!completedSimsRef.current.has(simId)) {
+      completedSimsRef.current.add(simId);
       user.earnXP(xpEarned);
       setCompletedSims((prev) => [...prev, simId]);
       setXpFloaterAmount(xpEarned);
