@@ -5,10 +5,35 @@
  *  POST /api/profiles/upsert — Profil oluştur veya güncelle (upsert)
  *  GET  /api/leaderboard     — XP'ye göre sıralı kullanıcı listesi
  *
+ * ─── Güven Sınırı / Trust Boundary ─────────────────────────────────────────
+ *
+ * Bu endpoint gerçek bir kimlik doğrulama (auth) yapmaz.
+ *
+ * Uygulama yerel/misafir-öncelikli (local/guest-first) mimariye sahiptir:
+ *  - Kullanıcı kimliği yalnızca cihazda AsyncStorage'da saklanır.
+ *  - `username` bir oturum tokeni değildir; herkes herhangi bir kullanıcı adıyla
+ *    POST atıp o kullanıcının profilini güncelleyebilir.
+ *  - XP ve diğer sayısal değerler istemci tarafından (client-submitted) gönderilir;
+ *    sunucu bu değerleri yeniden hesaplamaz.
+ *
+ * Bu mimari sonucu olarak:
+ *  - Liderlik tablosu (leaderboard) authoritative (güvenilir/doğrulanmış) değildir.
+ *  - Liderlik tablosu community/demo amaçlıdır; rekabetçi veya ödüllü kullanım için
+ *    uygun değildir.
+ *
+ * Gelecekte gerçek güvenlik için yapılması gerekenler (TODO):
+ *  - Sunucu tarafı oturum/kimlik sistemi (cihaz başına imzalı token veya OAuth).
+ *  - Upsert endpoint'ini yalnızca token sahibinin kendi profilini güncellemesine izin
+ *    verecek şekilde kısıtla.
+ *  - XP değişikliklerini istemciden toplu almak yerine sunucu tarafında event olarak
+ *    kaydet ve doğrula (server-side XP event validation).
+ * ────────────────────────────────────────────────────────────────────────────
+ *
  * Upsert mantığı:
  *  - id ve username olarak kullanıcı adı kullanılır (uuid yok)
  *  - Mevcut kayıt varsa xp/streak/level/bio/favoriteTopic güncellenir
- *  - Tüm gelen sayısal değerler sunucu tarafında doğrulanır (negatif XP, geçersiz level vb.)
+ *  - Tüm gelen sayısal değerler sunucu tarafında finite + clamp ile doğrulanır
+ *  - Metin alanları trim + uzunluk sınırı ile sanitize edilir
  */
 
 import { Router, type IRouter } from "express";
@@ -18,28 +43,69 @@ import { desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
+// ─── Validasyon Sabitleri ───────────────────────────────────────────────────
+
+const MAX_USERNAME_LENGTH = 64;
+const MAX_BIO_LENGTH = 280;
+const MAX_FAVORITE_TOPIC_LENGTH = 64;
+const MAX_XP = 9_999;
+const MAX_STREAK = 365;
+const MIN_LEVEL = 1;
+const MAX_LEVEL = 5;
+
+// ─── Yardımcı Fonksiyonlar ──────────────────────────────────────────────────
+
+/**
+ * Sayısal değeri geçerli aralığa sıkıştırır.
+ * Sonsuz veya NaN değerlerde `fallback` döner.
+ */
+function clampNumber(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number
+): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.min(Math.max(Math.floor(value), min), max);
+}
+
+/**
+ * Metin değerini trim'ler ve maksimum uzunluğa kırpar.
+ * String değilse boş string döner.
+ */
+function sanitizeText(value: unknown, maxLength: number): string {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+// ─── Endpoint'ler ───────────────────────────────────────────────────────────
+
 /**
  * POST /api/profiles/upsert
  * İstek gövdesi: { username, xp, streak, level, bio?, favoriteTopic? }
  * Yanıt: { ok: true } veya { error: string }
+ *
+ * Güven sınırı için yukarıdaki dosya başlığına bakınız.
  */
 router.post("/profiles/upsert", async (req, res) => {
   const { username, xp, streak, level, bio, favoriteTopic } = req.body ?? {};
 
-  /** username boşsa 400 döner */
+  /** username boş veya string değilse 400 döner */
   if (typeof username !== "string" || username.trim().length === 0) {
     res.status(400).json({ error: "username is required" });
     return;
   }
 
-  /** Sayısal alanlar doğrulanır; geçersizse güvenli varsayılan değerler kullanılır */
-  const safeXP       = typeof xp === "number" && xp >= 0         ? Math.floor(xp)     : 0;
-  const safeStreak   = typeof streak === "number" && streak >= 0 ? Math.floor(streak) : 0;
-  const safeLevel    = typeof level === "number" && level >= 1   ? Math.floor(level)  : 1;
-  const safeBio      = typeof bio === "string"          ? bio          : "";
-  const safeFavTopic = typeof favoriteTopic === "string" ? favoriteTopic : "";
-  /** Kullanıcı adı maksimum 64 karakter ile sınırlanır */
-  const name = username.trim().slice(0, 64);
+  /** Kullanıcı adı trim'lenir ve maksimum uzunluğa kırpılır */
+  const name = username.trim().slice(0, MAX_USERNAME_LENGTH);
+
+  /** Sayısal alanlar finite + clamp ile doğrulanır */
+  const safeXP = clampNumber(xp, 0, MAX_XP, 0);
+  const safeStreak = clampNumber(streak, 0, MAX_STREAK, 0);
+  const safeLevel = clampNumber(level, MIN_LEVEL, MAX_LEVEL, MIN_LEVEL);
+
+  /** Metin alanları sanitize edilir */
+  const safeBio = sanitizeText(bio, MAX_BIO_LENGTH);
+  const safeFavTopic = sanitizeText(favoriteTopic, MAX_FAVORITE_TOPIC_LENGTH);
 
   try {
     await db
@@ -80,6 +146,8 @@ router.post("/profiles/upsert", async (req, res) => {
  * Kullanıcıları XP'ye göre azalan sırada döner.
  * limit: 1–100 arasında, varsayılan 50.
  * Yalnızca liderlik tablosunda görünmesi gereken alanlar seçilir (hassas veri dışarıya açılmaz).
+ *
+ * Not: Bu veriler client-submitted XP'ye dayanır; authoritative değildir.
  */
 router.get("/leaderboard", async (req, res) => {
   const rawLimit = Number(req.query["limit"] ?? 50);

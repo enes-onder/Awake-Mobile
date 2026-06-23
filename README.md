@@ -11,10 +11,12 @@ Doğruluk Dedektifi; kullanıcıların sosyal medya paylaşımlarını analiz et
 - **Haber Lab** — Gerçek/sahte karar verme (swipe kartlar) + ipucu sistemi
 - **Simülasyon** — Adım adım gerçek hayat senaryoları (WhatsApp mesajı, sahte alıntı, kriz anı)
 - **Akademi** — 6 ders + quiz'ler; sıralı kilit sistemi
-- **Profil** — XP sistemi, 5 rütbe kademesi, 8 rozet, günlük seri takibi
+- **Profil & Liderlik Tablosu** — XP sistemi, 5 rütbe kademesi, 8 rozet, günlük seri takibi; profil ve ilerleme cihazda AsyncStorage'da tutulur, topluluk liderlik tablosu için backend'e senkronize edilir
 - **Yerel Auth** — Kod adı tabanlı hızlı giriş; tüm ilerleme cihazda AsyncStorage'da saklanır
 - **Offline Mod** — API sunucusuna bağlanamazsan yerel yedek veri devreye girer
 - Karanlık tema, haptic geri bildirim, responsive tasarım (telefon + tablet)
+
+> **Liderlik tablosu hakkında:** Puanlar, kullanıcının cihazından gönderilen XP değerlerine dayanır. Sunucu bu değerleri bağımsız olarak doğrulamaz. Bu nedenle liderlik tablosu **topluluk/demo** amaçlıdır; hileye dayanıklı rekabetçi skor sistemi değildir. Detaylar için bkz. [`docs/AUTH.md`](docs/AUTH.md).
 
 ---
 

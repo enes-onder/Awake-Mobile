@@ -116,6 +116,35 @@ Bu çağrı başarısız olursa sessizce görmezden gelinir (offline öncelikli 
 
 ---
 
+## Güven Sınırı / Leaderboard Trust Boundary
+
+### Mevcut mimari sınırları
+
+| Konu | Durum |
+|---|---|
+| Supabase / OAuth / JWT | Yok — uygulama bu sistemleri kullanmaz |
+| Kullanıcı kimliği | Yalnızca cihazda `AsyncStorage`'da; sunucuyla paylaşılmaz |
+| `POST /api/profiles/upsert` ownership kontrolü | Yok — herkes herhangi kullanıcı adıyla profil güncelleyebilir |
+| XP sunucu tarafı doğrulaması | Yok — istemciden gönderilen değer doğrudan kaydedilir |
+| Liderlik tablosu güvenilirliği | ❌ Authoritative değildir |
+
+### Sonuç
+
+Liderlik tablosu **topluluk/demo amaçlıdır**. XP değerleri istemci tarafından gönderildiği için rekabetçi veya ödüllü bir skor sistemi olarak kullanılamaz. Uygulama bunu "kesin güvenilir sıralama" olarak sunmamaktadır.
+
+Backend endpoint'i şu anda sayısal sınırlar uygular (max XP: 9999, max streak: 365, level 1–5, bio ≤ 280 karakter) ancak bu sınırlar sahtecilik önleme sistemi değildir; yalnızca veri bütünlüğünü korur.
+
+### Gerçek güvenlik için yapılması gerekenler (TODO)
+
+Liderlik tablosunu rekabetçi bir sistem hâline getirmek için şunlar gereklidir:
+
+1. **Sunucu tarafı oturum/kimlik sistemi** — cihaz başına imzalı token veya Google/Apple OAuth entegrasyonu
+2. **Ownership kontrolü** — `upsert` endpoint'ini yalnızca token sahibinin kendi profilini güncellemesine izin verecek şekilde kısıtla
+3. **Server-side XP event validation** — XP değişikliklerini toplu almak yerine her oyun aksiyonunu (vaka doğru/yanlış, ders tamamlama) sunucuya event olarak gönder ve sunucuda hesapla
+4. **Production CORS sınırlaması** — `app.ts` içindeki `cors()` production'da izin verilen origin listesiyle kısıtlanmalıdır
+
+---
+
 ## İlgili Dosyalar
 
 | Dosya | Rolü |
