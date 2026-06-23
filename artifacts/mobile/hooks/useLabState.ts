@@ -169,7 +169,7 @@ export function useLabState(): UseLabStateReturn {
    * 2. XP hesaplama (doğruysa reward × multiplier, yanlışsa -%40)
    * 3. UserContext güncelleme — tek atomik completeMission çağrısı
    * 4. Kutlama animasyonunu tetikleme
-   * 5. 2.3 saniye sonra result ekranına geçiş
+   * 5. VERDICT_FEEDBACK_MS + RESULT_TRANSITION_MS sonrası result ekranına geçiş
    */
   const handleVerdict = (verdict: "real" | "fake") => {
     if (!activeMission) return;

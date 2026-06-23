@@ -3,14 +3,12 @@ import React from "react";
 import { Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
+import { useBottomChromeSpacing } from "@/hooks/useBottomChromeSpacing";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
 import type { Mission } from "@/data/missions";
 
 import { styles } from "./labStyles";
-
-/** Standart iOS/Android tab bar içerik yüksekliği (px). Safe area inset'e eklenir. */
-const TAB_BAR_CONTENT_HEIGHT = 49;
 
 interface MissionResultViewProps {
   activeMission: Mission;
@@ -37,6 +35,8 @@ export function MissionResultView({
 }: MissionResultViewProps) {
   const colors = useColors();
   const r = useResponsive();
+  // useBottomChromeSpacing: tab bar (position:absolute) + safe area + dokunma dolgusu
+  const bottomChromeSpacing = useBottomChromeSpacing();
 
   return (
     <View style={[styles.resultPage, { backgroundColor: colors.background }]}>
@@ -179,7 +179,7 @@ export function MissionResultView({
           {
             backgroundColor: colors.background,
             borderTopColor: colors.border,
-            paddingBottom: Platform.OS === "web" ? 100 : bottomInset + TAB_BAR_CONTENT_HEIGHT + 8,
+            paddingBottom: bottomChromeSpacing,
             paddingHorizontal: r.hp,
           },
         ]}

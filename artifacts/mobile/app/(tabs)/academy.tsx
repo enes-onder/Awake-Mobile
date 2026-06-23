@@ -36,11 +36,9 @@ import { XPFloater } from "@/components/XPFloater";
 import { useUser } from "@/context/UserContext";
 import { useContent } from "@/context/ContentContext";
 import { type Lesson } from "@/data/lessons";
+import { useBottomChromeSpacing } from "@/hooks/useBottomChromeSpacing";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
-
-/** Standart iOS/Android tab bar içerik yüksekliği (px). Safe area inset'e eklenir. */
-const TAB_BAR_CONTENT_HEIGHT = 49;
 
 // ─── Alt Bileşenler ────────────────────────────────────────────────────────
 
@@ -159,6 +157,8 @@ function LessonPlayer({
   const insets = useSafeAreaInsets();
   const user = useUser();
   const r = useResponsive();
+  // useBottomChromeSpacing: tab bar (position:absolute) + safe area + dokunma dolgusu
+  const bottomChromeSpacing = useBottomChromeSpacing();
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
   const [phase, setPhase] = useState<"content" | "quiz" | "done">("content");
@@ -381,7 +381,7 @@ function LessonPlayer({
               backgroundColor: colors.background,
               borderTopColor: colors.border,
               paddingHorizontal: r.hp,
-              paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + TAB_BAR_CONTENT_HEIGHT + 8,
+              paddingBottom: bottomChromeSpacing,
             },
           ]}
         >

@@ -1,17 +1,15 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { SwipeCard } from "@/components/SwipeCard";
 import { XPFloater } from "@/components/XPFloater";
+import { useBottomChromeSpacing } from "@/hooks/useBottomChromeSpacing";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
 import type { Mission } from "@/data/missions";
 import { styles } from "./labStyles";
-
-/** Standart iOS/Android tab bar içerik yüksekliği (px). Safe area inset'e eklenir. */
-const TAB_BAR_CONTENT_HEIGHT = 49;
 
 interface ActiveMissionViewProps {
   activeMission: Mission;
@@ -48,9 +46,8 @@ export function ActiveMissionView({
 }: ActiveMissionViewProps) {
   const colors = useColors();
   const r = useResponsive();
-
-  // Tab bar (position:absolute) yüksekliğini bottomInset'e ekle
-  const safeBottom = Platform.OS === "web" ? 100 : bottomInset + TAB_BAR_CONTENT_HEIGHT + 8;
+  // useBottomChromeSpacing: tab bar (position:absolute) + safe area + dokunma dolgusu
+  const safeBottom = useBottomChromeSpacing();
 
   const feedbackColor = celebCorrect ? "#00C851" : "#FF3B30";
   const feedbackBg = celebCorrect ? "rgba(0,200,81,0.18)" : "rgba(255,59,48,0.18)";
