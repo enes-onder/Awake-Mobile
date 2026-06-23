@@ -146,6 +146,6 @@ Bu sayede internet bağlantısı olmasa da uygulama tam işlevsel çalışır.
 
 ---
 
-## Supabase Notu
+## Veritabanı Kaynağı
 
-`supabase/schema_and_seed.sql` dosyası eski bir tasarım artefaktıdır. Aktif mimari **Drizzle + Replit PostgreSQL**'dir. RLS (Row Level Security) ve `auth.users` gibi Supabase'e özgü özellikler aktif olarak kullanılmamaktadır.
+Aktif veritabanı kaynağı Drizzle şemasıdır: `lib/db/src/schema/index.ts`. Eski Supabase SQL artefaktı kaldırılmıştır.
