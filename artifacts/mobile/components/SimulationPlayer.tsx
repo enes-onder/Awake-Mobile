@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -40,6 +40,8 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
   const bottomChromeSpacing = useBottomChromeSpacing(24);
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
+  const scrollRef = useRef<ScrollView>(null);
+
   const [stepIdx, setStepIdx] = useState(0);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -51,6 +53,15 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
   useEffect(() => {
     progressWidth.value = withTiming((stepIdx / simulation.steps.length) * 100, { duration: 400 });
   }, [stepIdx]);
+
+  /** Cevap seçilince explanationCard görünür alana kaydır */
+  useEffect(() => {
+    if (showResult) {
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      });
+    }
+  }, [showResult]);
 
   const progressStyle = useAnimatedStyle(() => ({
     width: `${progressWidth.value}%` as any,
@@ -209,7 +220,7 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: r.hp, maxWidth: r.maxW, alignSelf: "center", width: "100%", flex: 1, justifyContent: "center", paddingTop: 16, gap: 16 }}>
           {currentStep.type === "narrative" && (
             <NarrativeStep step={currentStep} stepIdx={stepIdx} />

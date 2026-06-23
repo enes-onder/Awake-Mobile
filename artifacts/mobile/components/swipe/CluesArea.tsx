@@ -45,7 +45,8 @@ export function CluesArea({ clues, clueIndex, fs }: CluesAreaProps) {
       <ScrollView
         ref={scrollRef}
         style={{ maxHeight: maxClueHeight }}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 4 }}
+        showsVerticalScrollIndicator
         nestedScrollEnabled
         scrollEventThrottle={16}
       >

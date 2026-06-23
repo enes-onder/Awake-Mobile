@@ -78,6 +78,7 @@ export default function LabScreen() {
         lastCorrect={lab.lastCorrect}
         lastXP={lab.lastXP}
         lastMultiplier={lab.lastMultiplier}
+        cluePenalty={lab.clueIndex * 5}
         pendingMissionsCount={lab.pendingMissions.length}
         topPadding={lab.topPadding}
         bottomInset={lab.bottomInset}

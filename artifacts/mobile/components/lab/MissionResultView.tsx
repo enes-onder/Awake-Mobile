@@ -15,6 +15,8 @@ interface MissionResultViewProps {
   lastCorrect: boolean;
   lastXP: number;
   lastMultiplier: number;
+  /** Kullanılan ipucu sayısı × 5 XP — bilgilendirici, gerçek ceza zaten uygulandı */
+  cluePenalty: number;
   pendingMissionsCount: number;
   topPadding: number;
   bottomInset: number;
@@ -27,6 +29,7 @@ export function MissionResultView({
   lastCorrect,
   lastXP,
   lastMultiplier,
+  cluePenalty,
   pendingMissionsCount,
   topPadding,
   bottomInset,
@@ -36,7 +39,7 @@ export function MissionResultView({
   const colors = useColors();
   const r = useResponsive();
   // useBottomChromeSpacing: tab bar (position:absolute) + safe area + dokunma dolgusu
-  const bottomChromeSpacing = useBottomChromeSpacing();
+  const bottomChromeSpacing = useBottomChromeSpacing(28);
 
   return (
     <View style={[styles.resultPage, { backgroundColor: colors.background }]}>
@@ -132,6 +135,19 @@ export function MissionResultView({
                   }}
                 >
                   Günlük 2× bonus dahil!
+                </Text>
+              )}
+              {/* İpucu cezası bilgilendirmesi — ceza zaten önceden uygulandı */}
+              {lastXP >= 0 && cluePenalty > 0 && (
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                    fontSize: 11,
+                    marginTop: 2,
+                  }}
+                >
+                  İpucu cezası −{cluePenalty} XP ayrıca düşüldü
                 </Text>
               )}
             </View>

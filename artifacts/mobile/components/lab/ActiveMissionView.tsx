@@ -129,6 +129,25 @@ export function ActiveMissionView({
               Sol = Yanlış
             </Text>
           </Text>
+          {/* Vakanın ipucu cezası sonrası tahmini net ödülü */}
+          {(() => {
+            const gross = Math.round(activeMission.xpReward * user.dailyXPMultiplier);
+            const net = Math.max(0, gross - clueIndex * 5);
+            return (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 3, marginLeft: 4 }}>
+                <Feather name="zap" size={11} color={clueIndex > 0 ? colors.fake : colors.warning} />
+                <Text
+                  style={{
+                    fontFamily: "Inter_700Bold",
+                    fontSize: 12,
+                    color: clueIndex > 0 ? colors.fake : colors.warning,
+                  }}
+                >
+                  {net > 0 ? `+${net}` : `${net}`}
+                </Text>
+              </View>
+            );
+          })()}
         </Animated.View>
       </View>
 

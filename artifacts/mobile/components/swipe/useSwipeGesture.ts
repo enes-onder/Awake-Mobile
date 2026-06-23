@@ -68,8 +68,13 @@ export function useSwipeGesture({ width, onVerdictSelected }: UseSwipeGesturePro
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !verdictLockedRef.current,
-      onMoveShouldSetPanResponder: (_, gs) =>
-        !verdictLockedRef.current && Math.abs(gs.dx) > 5,
+      onMoveShouldSetPanResponder: (_, gs) => {
+        if (verdictLockedRef.current) return false;
+        const absDx = Math.abs(gs.dx);
+        const absDy = Math.abs(gs.dy);
+        // Sadece net yatay hareketi yakala; dikey scroll CluesArea'ya bırakılır
+        return absDx > 8 && absDx > absDy * 1.2;
+      },
       onPanResponderMove: (_, gs) => {
         if (verdictLockedRef.current) return;
         pan.setValue({ x: gs.dx, y: gs.dy * 0.2 });
