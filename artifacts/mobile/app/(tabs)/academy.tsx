@@ -39,6 +39,9 @@ import { type Lesson } from "@/data/lessons";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
 
+/** Standart iOS/Android tab bar içerik yüksekliği (px). Safe area inset'e eklenir. */
+const TAB_BAR_CONTENT_HEIGHT = 49;
+
 // ─── Alt Bileşenler ────────────────────────────────────────────────────────
 
 /**
@@ -378,7 +381,7 @@ function LessonPlayer({
               backgroundColor: colors.background,
               borderTopColor: colors.border,
               paddingHorizontal: r.hp,
-              paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 16,
+              paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + TAB_BAR_CONTENT_HEIGHT + 8,
             },
           ]}
         >

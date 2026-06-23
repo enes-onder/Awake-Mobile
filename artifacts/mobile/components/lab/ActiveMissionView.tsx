@@ -3,13 +3,15 @@ import React from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
-import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { SwipeCard } from "@/components/SwipeCard";
 import { XPFloater } from "@/components/XPFloater";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
 import type { Mission } from "@/data/missions";
 import { styles } from "./labStyles";
+
+/** Standart iOS/Android tab bar içerik yüksekliği (px). Safe area inset'e eklenir. */
+const TAB_BAR_CONTENT_HEIGHT = 49;
 
 interface ActiveMissionViewProps {
   activeMission: Mission;
@@ -47,11 +49,15 @@ export function ActiveMissionView({
   const colors = useColors();
   const r = useResponsive();
 
-  const safeBottom = Platform.OS === "web" ? 100 : Math.max(bottomInset, 8) + 12;
+  // Tab bar (position:absolute) yüksekliğini bottomInset'e ekle
+  const safeBottom = Platform.OS === "web" ? 100 : bottomInset + TAB_BAR_CONTENT_HEIGHT + 8;
+
+  const feedbackColor = celebCorrect ? "#00C851" : "#FF3B30";
+  const feedbackBg = celebCorrect ? "rgba(0,200,81,0.18)" : "rgba(255,59,48,0.18)";
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Fixed header */}
+      {/* Sabit üst başlık */}
       <View
         style={{
           paddingTop: topPadding + 14,
@@ -104,7 +110,61 @@ export function ActiveMissionView({
         </Animated.View>
       </View>
 
-      {/* Card area — fills remaining space, card is center-aligned */}
+      {/* Inline geri bildirim banner'ı — header ile kart arasında, overlay değil */}
+      {celebVisible && (
+        <Animated.View
+          entering={FadeInDown.duration(200).springify()}
+          style={{
+            paddingHorizontal: r.hp,
+            paddingBottom: 8,
+            maxWidth: r.maxW,
+            alignSelf: "center",
+            width: "100%",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 10,
+              paddingHorizontal: 16,
+              paddingVertical: 11,
+              borderRadius: 14,
+              borderWidth: 1.5,
+              backgroundColor: feedbackBg,
+              borderColor: feedbackColor + "99",
+            }}
+          >
+            <Feather
+              name={celebCorrect ? "check-circle" : "x-circle"}
+              size={20}
+              color={feedbackColor}
+            />
+            <View style={{ gap: 2, flex: 1 }}>
+              <Text
+                style={{
+                  fontFamily: "Inter_700Bold",
+                  fontSize: 14,
+                  color: feedbackColor,
+                }}
+              >
+                {celebCorrect ? "Doğru Tespit!" : "Yanlış Tahmin"}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 12,
+                  color: "rgba(255,255,255,0.65)",
+                }}
+              >
+                {celebCorrect ? "Harika iş, ajan!" : "Dezenformasyon bu sefer kazandı"}
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+      )}
+
+      {/* Kart alanı — kalan alanı doldurur, kart ortaya hizalanır */}
       <View
         style={{
           flex: 1,
@@ -127,14 +187,6 @@ export function ActiveMissionView({
         </Animated.View>
       </View>
 
-      <CelebrationOverlay
-        visible={celebVisible}
-        isCorrect={celebCorrect}
-        message={celebCorrect ? "Doğru Tespit!" : "Yanlış Tahmin"}
-        subMessage={
-          celebCorrect ? "Harika iş, ajan!" : "Dezenformasyon bu sefer kazandı"
-        }
-      />
       <XPFloater
         visible={xpFloaterVisible}
         amount={xpFloaterAmount}

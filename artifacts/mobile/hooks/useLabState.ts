@@ -21,6 +21,11 @@ import { useUser } from "@/context/UserContext";
 import type { Mission } from "@/data/missions";
 import type { Simulation } from "@/data/simulations";
 
+/** Karar geri bildirim banner'ının ekranda kaldığı süre (ms) */
+const VERDICT_FEEDBACK_MS = 800;
+/** Geri bildirim kapandıktan sonra result ekranına geçiş gecikmesi (ms) */
+const RESULT_TRANSITION_MS = 200;
+
 /** Lab ekranındaki aktif sekme */
 export type LabTab = "vakalar" | "simulasyon";
 
@@ -196,14 +201,14 @@ export function useLabState(): UseLabStateReturn {
       );
     }
 
-    /** Kutlama animasyonu bittikten sonra result ekranına geç.
+    /** Kutlama feedback banner'ı bittikten sonra result ekranına geç.
      * scheduleTimer kullanılır — erken çıkışta veya unmount'ta timer iptal edilir. */
     scheduleTimer(() => {
       setCelebVisible(false);
       scheduleTimer(() => {
         setLabState("result");
-      }, 380);
-    }, 2300);
+      }, RESULT_TRANSITION_MS);
+    }, VERDICT_FEEDBACK_MS);
   };
 
   /**

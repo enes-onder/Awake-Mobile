@@ -6,7 +6,11 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
 import type { Mission } from "@/data/missions";
+
 import { styles } from "./labStyles";
+
+/** Standart iOS/Android tab bar içerik yüksekliği (px). Safe area inset'e eklenir. */
+const TAB_BAR_CONTENT_HEIGHT = 49;
 
 interface MissionResultViewProps {
   activeMission: Mission;
@@ -175,7 +179,7 @@ export function MissionResultView({
           {
             backgroundColor: colors.background,
             borderTopColor: colors.border,
-            paddingBottom: Platform.OS === "web" ? 100 : bottomInset + 16,
+            paddingBottom: Platform.OS === "web" ? 100 : bottomInset + TAB_BAR_CONTENT_HEIGHT + 8,
             paddingHorizontal: r.hp,
           },
         ]}
