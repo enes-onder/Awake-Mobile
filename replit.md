@@ -65,6 +65,10 @@ pnpm --filter @workspace/db run seed
 - **Streak** — Günlük giriş serisi
 - **Rozetler** — Özel başarı koşullarını tamamlayınca kilidi açılır
 
+## Bağlayıcı Geliştirme Kuralları
+
+Tüm geliştirme işleri `PROJECT_RULES.md` dosyasındaki kurallara uymalıdır. Hata düzeltme öncelikleri için `FEEDBACK.md` takip edilir.
+
 ## Kullanıcı Tercihleri
 
 - Tüm dosyalar Türkçe yorum satırları içermeli
