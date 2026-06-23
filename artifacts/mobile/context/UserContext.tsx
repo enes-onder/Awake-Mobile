@@ -308,10 +308,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const rankIdx = RANKS.indexOf(rank);
   /** Bir sonraki rütbe; maksimum rütbedeyse null */
   const nextRank = rankIdx < RANKS.length - 1 ? RANKS[rankIdx + 1] : null;
-  const xpInRange = state.xp - rank.minXP;
-  const rangeSize = rank.maxXP - rank.minXP + 1;
-  /** 0–1 arası ilerleme çubuğu değeri */
-  const xpProgress = Math.min(xpInRange / rangeSize, 1);
+  /** Bir sonraki rütbe eşiğine göre hesaplanır; maksimum rütbede sabit 1 döner */
+  const rankSpan = nextRank ? nextRank.minXP - rank.minXP : 1;
+  const xpProgress = nextRank
+    ? Math.min(Math.max((state.xp - rank.minXP) / rankSpan, 0), 1)
+    : 1;
   const accuracyRate =
     state.totalAnswers > 0
       ? Math.round((state.correctAnswers / state.totalAnswers) * 100)
