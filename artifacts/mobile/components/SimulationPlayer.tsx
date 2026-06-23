@@ -36,8 +36,8 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const r = useResponsive();
-  /** Tab bar (position:absolute) + safe area + dokunma dolgusu */
-  const bottomChromeSpacing = useBottomChromeSpacing();
+  /** Tab bar (position:absolute) + safe area + extra dolgu — CTA'yı biraz daha yukarı alır */
+  const bottomChromeSpacing = useBottomChromeSpacing(24);
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
   const [stepIdx, setStepIdx] = useState(0);

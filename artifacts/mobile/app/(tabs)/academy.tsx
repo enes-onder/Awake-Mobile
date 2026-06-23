@@ -157,8 +157,8 @@ function LessonPlayer({
   const insets = useSafeAreaInsets();
   const user = useUser();
   const r = useResponsive();
-  // useBottomChromeSpacing: tab bar (position:absolute) + safe area + dokunma dolgusu
-  const bottomChromeSpacing = useBottomChromeSpacing();
+  /** Tab bar (position:absolute) + safe area + extra dolgu — CTA'yı biraz daha yukarı alır */
+  const bottomChromeSpacing = useBottomChromeSpacing(24);
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
   const [phase, setPhase] = useState<"content" | "quiz" | "done">("content");
@@ -262,7 +262,7 @@ function LessonPlayer({
             contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ maxWidth: r.maxW, alignSelf: "center", width: "100%", paddingHorizontal: r.hp, paddingTop: 8, justifyContent: "flex-start", gap: 0 }}>
+            <View style={{ flex: 1, maxWidth: r.maxW, alignSelf: "center", width: "100%", paddingHorizontal: r.hp, paddingTop: 8, justifyContent: "center" }}>
               <View style={[styles.lessonIconBig, { backgroundColor: lesson.color + "18", width: r.sp(72), height: r.sp(72), borderRadius: r.sp(20), marginTop: r.sp(28), marginBottom: r.sp(24) }]}>
                 <Feather name={lesson.icon as any} size={r.sp(36)} color={lesson.color} />
               </View>
@@ -283,7 +283,7 @@ function LessonPlayer({
             contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ maxWidth: r.maxW, alignSelf: "center", width: "100%", paddingHorizontal: r.hp, paddingTop: 16, gap: r.sp(16) }}>
+            <View style={{ flex: 1, maxWidth: r.maxW, alignSelf: "center", width: "100%", paddingHorizontal: r.hp, paddingTop: 16, gap: r.sp(16), justifyContent: "center" }}>
               <View style={[styles.quizHeader, { backgroundColor: colors.primary + "14" }]}>
                 <Feather name="help-circle" size={r.sp(18)} color={colors.primary} />
                 <Text style={[styles.quizHeaderText, { color: colors.primary, fontSize: r.fs(13) }]}>

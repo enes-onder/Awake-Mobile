@@ -8,6 +8,7 @@ import { XPFloater } from "@/components/XPFloater";
 import { useBottomChromeSpacing } from "@/hooks/useBottomChromeSpacing";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
+import { useUser } from "@/context/UserContext";
 import type { Mission } from "@/data/missions";
 import { styles } from "./labStyles";
 
@@ -46,6 +47,7 @@ export function ActiveMissionView({
 }: ActiveMissionViewProps) {
   const colors = useColors();
   const r = useResponsive();
+  const user = useUser();
   /** Tab bar (position:absolute) + safe area + dokunma dolgusu */
   const safeBottom = useBottomChromeSpacing();
 
@@ -90,6 +92,21 @@ export function ActiveMissionView({
             </Text>
             <Text style={[styles.activeSub, { color: colors.mutedForeground }]}>
               {currentMissionIdx + 1}/{pendingMissionsCount} · Vaka Analizi
+            </Text>
+          </View>
+          {/* Mevcut toplam XP'yi kompakt pill olarak göster */}
+          <View
+            style={[
+              styles.activeXpPill,
+              {
+                backgroundColor: colors.warning + "18",
+                borderColor: colors.warning + "44",
+              },
+            ]}
+          >
+            <Feather name="zap" size={12} color={colors.warning} />
+            <Text style={[styles.activeXpPillText, { color: colors.warning }]}>
+              {user.xp} XP
             </Text>
           </View>
         </Animated.View>

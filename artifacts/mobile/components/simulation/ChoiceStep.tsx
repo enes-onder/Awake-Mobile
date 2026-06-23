@@ -86,7 +86,6 @@ export function ChoiceStep({
                 {
                   color: selectedChoice.isCorrect ? colors.success : colors.fake,
                   fontSize: r.fs(14),
-                  flex: 1,
                 },
               ]}
             >

@@ -42,6 +42,8 @@ export function MissionResultView({
     <View style={[styles.resultPage, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
           paddingTop: topPadding + 16,
           paddingBottom: 24,
           paddingHorizontal: r.hp,

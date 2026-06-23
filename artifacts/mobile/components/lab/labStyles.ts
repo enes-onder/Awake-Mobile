@@ -126,7 +126,22 @@ export const styles = StyleSheet.create({
   simDiff: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   simXP: { fontFamily: "Inter_700Bold", fontSize: 12 },
 
-  activeHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 },
+  activeHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
+  /** Lab active ekranında toplam XP'yi gösteren kompakt pill */
+  activeXpPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    flexShrink: 0,
+  },
+  activeXpPillText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+  },
   backBtn: {
     width: 40,
     height: 40,

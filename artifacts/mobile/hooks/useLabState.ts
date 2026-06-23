@@ -22,9 +22,9 @@ import type { Mission } from "@/data/missions";
 import type { Simulation } from "@/data/simulations";
 
 /** Karar geri bildirim banner'ının ekranda kaldığı süre (ms) */
-const VERDICT_FEEDBACK_MS = 1050;
+const VERDICT_FEEDBACK_MS = 1200;
 /** Geri bildirim kapandıktan sonra result ekranına geçiş gecikmesi (ms) */
-const RESULT_TRANSITION_MS = 220;
+const RESULT_TRANSITION_MS = 240;
 
 /** Lab ekranındaki aktif sekme */
 export type LabTab = "vakalar" | "simulasyon";
