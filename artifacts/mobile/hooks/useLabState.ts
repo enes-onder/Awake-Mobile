@@ -78,6 +78,8 @@ export interface UseLabStateReturn {
   handleUseClue: () => void;
   handleNextMission: () => void;
   handleSimComplete: (simId: string, xpEarned: number) => void;
+  /** Simülasyon yarıda bırakılınca — completedSims'e ekler (tekrar oynamayı önler), XP kazandırmaz */
+  handleSimExit: () => void;
 }
 
 export function useLabState(): UseLabStateReturn {
@@ -164,7 +166,7 @@ export function useLabState(): UseLabStateReturn {
   /**
    * Kullanıcının "Gerçek" veya "Sahte" kararını işler:
    * 1. Doğruluk kontrolü
-   * 2. XP hesaplama (doğruysa reward × multiplier, yanlışsa -%40)
+   * 2. XP hesaplama (doğruysa reward × multiplier − ipucu cezaları, yanlışsa -%40)
    * 3. UserContext güncelleme — tek atomik completeMission çağrısı
    * 4. XP floater'ı tetikleme
    * 5. RESULT_TRANSITION_MS sonrası result ekranına geçiş (boş active ekran yok)
@@ -176,7 +178,10 @@ export function useLabState(): UseLabStateReturn {
     const baseXP = correct
       ? activeMission.xpReward
       : -Math.floor(activeMission.xpReward * 0.4);
-    const xpEarned = correct ? baseXP * multiplier : baseXP;
+    // İpucu cezası (clueIndex × 5) doğru cevap ödülünden düşülür; yanlış cevapta ek ceza yok
+    const xpEarned = correct
+      ? Math.max(0, baseXP * multiplier - clueIndex * 5)
+      : baseXP;
 
     /** Sahte tespit: kullanıcı verdict==="fake" olan vakayı doğru tespit etti */
     const wasFakeDetected = correct && activeMission.verdict === "fake";
@@ -208,16 +213,13 @@ export function useLabState(): UseLabStateReturn {
   };
 
   /**
-   * Bir ipucu açar, 5 XP düşürür ve kullanıcıya görsel feedback verir.
+   * Bir ipucu açar. Ceza genel XP'den anında DÜŞÜRÜLMEz —
+   * handleVerdict içinde xpEarned hesaplanırken doğru cevap ödülünden düşülür.
    * Tüm ipuçları zaten açıksa hiçbir şey yapmaz.
    */
   const handleUseClue = () => {
     if (!activeMission || clueIndex >= activeMission.clues.length) return;
     setClueIndex((prev) => prev + 1);
-    user.earnXP(-5);
-    /** Kullanıcıya -5 XP düşüşünü kırmızı floater ile göster */
-    setXpFloaterAmount(-5);
-    setXpFloaterVisible(true);
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -235,6 +237,18 @@ export function useLabState(): UseLabStateReturn {
     } else {
       setLabState("list");
     }
+  };
+
+  /**
+   * Simülasyon yarıda çıkılınca completedSims'e ekler (XP kazandırmaz).
+   * Böylece aynı simülasyon tekrar tekrar girilerek XP farmlanamazˌ
+   */
+  const handleSimExit = () => {
+    const simId = activeSim;
+    if (simId && !completedSims.includes(simId)) {
+      setCompletedSims((prev) => [...prev, simId]);
+    }
+    setActiveSim(null);
   };
 
   /**
@@ -281,5 +295,6 @@ export function useLabState(): UseLabStateReturn {
     handleUseClue,
     handleNextMission,
     handleSimComplete,
+    handleSimExit,
   };
 }

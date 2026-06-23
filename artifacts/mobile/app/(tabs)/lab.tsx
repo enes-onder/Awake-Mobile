@@ -37,7 +37,7 @@ export default function LabScreen() {
         <SimulationPlayer
           simulation={lab.activeSim_data}
           onComplete={(xp) => lab.handleSimComplete(lab.activeSim!, xp)}
-          onExit={() => lab.setActiveSim(null)}
+          onExit={lab.handleSimExit}
         />
         <XPFloater
           visible={lab.xpFloaterVisible}
@@ -78,7 +78,6 @@ export default function LabScreen() {
         lastCorrect={lab.lastCorrect}
         lastXP={lab.lastXP}
         lastMultiplier={lab.lastMultiplier}
-        cluePenalty={lab.clueIndex * 5}
         pendingMissionsCount={lab.pendingMissions.length}
         topPadding={lab.topPadding}
         bottomInset={lab.bottomInset}

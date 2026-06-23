@@ -202,7 +202,8 @@ function LessonPlayer({
       setBonusXP(prev => prev + 10);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
-      user.earnXP(-10);
+      // Ceza anında uygulanmaz — ders tamamlanmadan çıkışta sıfırlanır
+      setBonusXP(prev => prev - 10);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
@@ -218,8 +219,8 @@ function LessonPlayer({
     }
   };
 
-  /** Toplam XP: dersin temel ödülü + quiz bonus XP'si */
-  const totalXP = lesson.xpReward + bonusXP;
+  /** Toplam XP: dersin temel ödülü + quiz bonus XP (negatif olabilir, 0'ın altına düşmez) */
+  const totalXP = Math.max(0, lesson.xpReward + bonusXP);
 
   /** Done aşamasına girilince 2sn sonra otomatik tamamla */
   useEffect(() => {
