@@ -12,7 +12,7 @@
  */
 
 import * as Haptics from "expo-haptics";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -82,8 +82,48 @@ export function useLabState(): UseLabStateReturn {
   const user = useUser();
   const { missions, simulations } = useContent();
 
+  /** Aktif timer referansları — cleanup ve erken çıkış için tutulur */
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  /** Tüm bekleyen timer'ları iptal eder ve listeyi temizler */
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  }, []);
+
+  /**
+   * Zamanlayıcı kurar, referansı timersRef'e ekler.
+   * Timer çalıştığında kendini listeden çıkarır.
+   */
+  const scheduleTimer = useCallback((callback: () => void, delay: number) => {
+    const timer = setTimeout(() => {
+      timersRef.current = timersRef.current.filter((t) => t !== timer);
+      callback();
+    }, delay);
+    timersRef.current.push(timer);
+    return timer;
+  }, []);
+
+  /** Hook unmount olduğunda tüm bekleyen timer'ları temizle */
+  useEffect(() => {
+    return () => {
+      clearTimers();
+    };
+  }, [clearTimers]);
+
   const [activeTab, setActiveTab] = useState<LabTab>("vakalar");
-  const [labState, setLabState] = useState<LabState>("list");
+  /** İç state setter — doğrudan kullanılmaz; setLabState wrapper üzerinden erişilir */
+  const [labState, _setLabState] = useState<LabState>("list");
+
+  /**
+   * Lab state'ini günceller.
+   * Geçiş öncesinde bekleyen timer'ları temizler — erken çıkışta
+   * animasyon timerlarının state'i ezlemesini önler.
+   */
+  const setLabState = useCallback((nextState: LabState) => {
+    clearTimers();
+    _setLabState(nextState);
+  }, [clearTimers]);
   const [currentMissionIdx, setCurrentMissionIdx] = useState(0);
   const [clueIndex, setClueIndex] = useState(0);
   const [lastCorrect, setLastCorrect] = useState(false);
@@ -156,10 +196,13 @@ export function useLabState(): UseLabStateReturn {
       );
     }
 
-    /** Kutlama animasyonu bittikten sonra result ekranına geç */
-    setTimeout(() => {
+    /** Kutlama animasyonu bittikten sonra result ekranına geç.
+     * scheduleTimer kullanılır — erken çıkışta veya unmount'ta timer iptal edilir. */
+    scheduleTimer(() => {
       setCelebVisible(false);
-      setTimeout(() => setLabState("result"), 380);
+      scheduleTimer(() => {
+        setLabState("result");
+      }, 380);
     }, 2300);
   };
 
