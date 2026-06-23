@@ -1,13 +1,20 @@
 /**
  * ContentContext — Vakalar, dersler ve simülasyonları API'den yükler.
  *
- * userXP prop'u değiştiğinde içerik yeniden çekilir ve kilitleme
- * mantığı (requiredXp kontrolü) tekrar hesaplanır.
+ * İçerik yalnızca mount sırasında bir kez çekilir; XP değişimlerinde
+ * API tekrar çağrılmaz. Kilitleme mantığı (requiredXp kontrolü) XP
+ * değiştikçe lokal olarak useMemo ile yeniden hesaplanır.
  *
  * Yükleme başarısız olursa yerel statik veri (data/ klasörü) yedek olarak kullanılır.
  */
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { LESSONS, type Lesson } from "@/data/lessons";
 import { MISSIONS, type Mission } from "@/data/missions";
@@ -96,7 +103,7 @@ function mapSimulation(row: Record<string, unknown>): Simulation {
 
 /**
  * İçerik sağlayıcı bileşeni.
- * @param userXP — Kullanıcının güncel XP değeri; içerik kilitleme hesabı için kullanılır.
+ * @param userXP — Kullanıcının güncel XP değeri; kilit hesabı için kullanılır.
  */
 export function ContentProvider({
   userXP,
@@ -108,14 +115,26 @@ export function ContentProvider({
   const [missions, setMissions] = useState<Mission[]>(MISSIONS);
   const [lessons, setLessons] = useState<Lesson[]>(LESSONS);
   const [simulations, setSimulations] = useState<Simulation[]>(SIMULATIONS);
-  const [lockedMissionIds, setLockedMissionIds] = useState<string[]>([]);
-  const [lockedLessonIds, setLockedLessonIds] = useState<string[]>([]);
-  const [lockedSimulationIds, setLockedSimulationIds] = useState<string[]>([]);
+
+  /**
+   * Ham API verisi — kilit hesabı için required_xp alanlarını saklar.
+   * Dönüştürülmüş Mission/Lesson/Simulation tiplerinde bu alan bulunmadığından
+   * kilit useMemo'su buraya bağlıdır.
+   */
+  const [rawMissionsData, setRawMissionsData] = useState<
+    Record<string, unknown>[]
+  >([]);
+  const [rawLessonsData, setRawLessonsData] = useState<
+    Record<string, unknown>[]
+  >([]);
+  const [rawSimsData, setRawSimsData] = useState<Record<string, unknown>[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * userXP değiştiğinde API'den tüm içerikleri paralel olarak çeker.
+   * İçerik yalnızca mount sırasında bir kez çekilir.
+   * userXP bağımlılığı yoktur — XP değişimleri API çağrısı tetiklemez.
    * Bileşen unmount olursa `cancelled` flag'i ile stale state güncellemesi önlenir.
    */
   useEffect(() => {
@@ -135,30 +154,48 @@ export function ContentProvider({
 
         if (cancelled) return;
 
-        const fetchedMissions = missionsData.map((r) => mapMission(r as Record<string, unknown>));
-        const fetchedLessons = lessonsData.map((r) => mapLesson(r as Record<string, unknown>));
-        const fetchedSims = simsData.map((r) => mapSimulation(r as Record<string, unknown>));
-
-        /** Kullanıcının XP'si yetersiz olan içerikleri kilitli olarak işaretle */
-        const lockedM = (missionsData as Record<string, unknown>[])
-          .filter((r) => ((r.required_xp ?? r.requiredXp) as number) > userXP)
-          .map((r) => r.id as string);
-        const lockedL = (lessonsData as Record<string, unknown>[])
-          .filter((r) => ((r.required_xp ?? r.requiredXp) as number) > userXP)
-          .map((r) => r.id as string);
-        const lockedS = (simsData as Record<string, unknown>[])
-          .filter((r) => ((r.required_xp ?? r.requiredXp) as number) > userXP)
-          .map((r) => r.id as string);
+        const fetchedMissions = missionsData.map((r) =>
+          mapMission(r as Record<string, unknown>)
+        );
+        const fetchedLessons = lessonsData.map((r) =>
+          mapLesson(r as Record<string, unknown>)
+        );
+        const fetchedSims = simsData.map((r) =>
+          mapSimulation(r as Record<string, unknown>)
+        );
 
         /** Boş API yanıtında statik veriye düş */
         setMissions(fetchedMissions.length > 0 ? fetchedMissions : MISSIONS);
         setLessons(fetchedLessons.length > 0 ? fetchedLessons : LESSONS);
         setSimulations(fetchedSims.length > 0 ? fetchedSims : SIMULATIONS);
-        setLockedMissionIds(lockedM);
-        setLockedLessonIds(lockedL);
-        setLockedSimulationIds(lockedS);
+
+        /**
+         * Ham veriyi kilit hesabı için sakla.
+         * API boş yanıt döndürdüğünde ham veri de boş kalır;
+         * useMemo boş array üretir ve tüm içerik kilitsiz görünür
+         * (statik verilerle çalışan offline mod için doğru davranış).
+         */
+        setRawMissionsData(
+          fetchedMissions.length > 0
+            ? (missionsData as Record<string, unknown>[])
+            : []
+        );
+        setRawLessonsData(
+          fetchedLessons.length > 0
+            ? (lessonsData as Record<string, unknown>[])
+            : []
+        );
+        setRawSimsData(
+          fetchedSims.length > 0
+            ? (simsData as Record<string, unknown>[])
+            : []
+        );
       } catch (err) {
-        /** API erişilemezse statik veriye geri dön */
+        /**
+         * API erişilemezse statik veriye geri dön.
+         * Ham veri boş kalır — useMemo boş lockedIds üretir,
+         * statik içerik kilitsiz görünür.
+         */
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "İçerik yüklenemedi");
           setMissions(MISSIONS);
@@ -174,7 +211,41 @@ export function ContentProvider({
     return () => {
       cancelled = true;
     };
-  }, [userXP]);
+  }, []); // Boş bağımlılık — sadece mount'ta çalışır, XP değişimi tetiklemez
+
+  // ─── Kilit Hesapları (Local) ─────────────────────────────────────────────
+  // API çağrısı yapılmaz; ham veri veya userXP değişince yeniden hesaplanır.
+  // Number() ile NaN riski engellenir: undefined → NaN → 0 yerine explicit 0.
+
+  const lockedMissionIds = useMemo(
+    () =>
+      rawMissionsData
+        .filter(
+          (r) => Number(r.required_xp ?? r.requiredXp ?? 0) > userXP
+        )
+        .map((r) => r.id as string),
+    [rawMissionsData, userXP]
+  );
+
+  const lockedLessonIds = useMemo(
+    () =>
+      rawLessonsData
+        .filter(
+          (r) => Number(r.required_xp ?? r.requiredXp ?? 0) > userXP
+        )
+        .map((r) => r.id as string),
+    [rawLessonsData, userXP]
+  );
+
+  const lockedSimulationIds = useMemo(
+    () =>
+      rawSimsData
+        .filter(
+          (r) => Number(r.required_xp ?? r.requiredXp ?? 0) > userXP
+        )
+        .map((r) => r.id as string),
+    [rawSimsData, userXP]
+  );
 
   return (
     <ContentContext.Provider
