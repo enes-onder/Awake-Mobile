@@ -17,48 +17,74 @@ interface XPFloaterProps {
   amount: number;
   visible: boolean;
   onDone: () => void;
+  /** XPFloater'ın ekranın altından uzaklığı (px). Varsayılan: 140. */
+  bottomOffset?: number;
 }
 
-export function XPFloater({ amount, visible, onDone }: XPFloaterProps) {
+export function XPFloater({ amount, visible, onDone, bottomOffset }: XPFloaterProps) {
   const colors = useColors();
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(0);
   const scale = useSharedValue(0.5);
 
-  useEffect(() => {
-    if (visible) {
-      opacity.value = 0;
-      translateY.value = 0;
-      scale.value = 0.5;
+  /** Negatif XP için kırmızı, pozitif için amber/warning */
+  const isNegative = amount < 0;
+  const toneColor = isNegative ? colors.fake : colors.warning;
+  const bgColor = isNegative ? colors.fake + "18" : colors.warning + "18";
+  const borderColor = isNegative ? colors.fake + "55" : colors.warning + "55";
 
-      opacity.value = withSequence(
-        withSpring(1, { damping: 8 }),
-        withDelay(
-          300,
-          withTiming(0, { duration: 200 }, (finished) => {
-            if (finished) runOnJS(onDone)();
-          }),
-        ),
-      );
-      scale.value = withSpring(1, { damping: 6, stiffness: 200 });
-      translateY.value = withSequence(
-        withSpring(-8, { damping: 8 }),
-        withDelay(200, withTiming(-40, { duration: 300 })),
-      );
-    }
-  }, [visible]);
+  /** amount değişince de re-tetikle — aynı visible=true iken ipucu/karar sıralaması için */
+  useEffect(() => {
+    if (!visible) return;
+
+    opacity.value = 0;
+    translateY.value = 0;
+    scale.value = 0.5;
+
+    opacity.value = withSequence(
+      withSpring(1, { damping: 8 }),
+      withDelay(
+        300,
+        withTiming(0, { duration: 200 }, (finished) => {
+          if (finished) runOnJS(onDone)();
+        }),
+      ),
+    );
+    scale.value = withSpring(1, { damping: 6, stiffness: 200 });
+    translateY.value = withSequence(
+      withSpring(-8, { damping: 8 }),
+      withDelay(200, withTiming(-40, { duration: 300 })),
+    );
+  }, [visible, amount]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
   }));
 
-  if (!visible) return null;
+  /** bottomOffset yoksa güvenli varsayılan */
+  const safeBottom = bottomOffset ?? 140;
+
+  /** visible=false iken mount tutulur ama opacity 0'da — return null ile animasyon sıfırlanmaz */
+  if (!visible && opacity.value === 0) return null;
+
+  /** +35 XP veya -14 XP formatı — asla +-14 XP yazmamalı */
+  const formattedAmount = `${amount > 0 ? "+" : ""}${amount} XP`;
 
   return (
-    <Animated.View style={[styles.container, animStyle]}>
-      <Feather name="zap" size={14} color={colors.warning} />
-      <Text style={[styles.text, { color: colors.warning }]}>+{amount} XP</Text>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          bottom: safeBottom,
+          backgroundColor: bgColor,
+          borderColor,
+        },
+        animStyle,
+      ]}
+    >
+      <Feather name="zap" size={14} color={toneColor} />
+      <Text style={[styles.text, { color: toneColor }]}>{formattedAmount}</Text>
     </Animated.View>
   );
 }
@@ -66,14 +92,11 @@ export function XPFloater({ amount, visible, onDone }: XPFloaterProps) {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 110,
     alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgba(255,149,0,0.15)",
     borderWidth: 1.5,
-    borderColor: "rgba(255,149,0,0.5)",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 24,

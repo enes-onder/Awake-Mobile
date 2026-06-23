@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
-import { styles } from "./swipeCardStyles";
+import { styles as cardStyles } from "./swipeCardStyles";
 
 interface CluesAreaProps {
   clues: string[];
@@ -11,21 +11,57 @@ interface CluesAreaProps {
   fs: (base: number) => number;
 }
 
+/**
+ * CluesArea — Açılmış ipuçlarını kart içinde gösterir.
+ *
+ * İpuçları ScrollView içinde render edilir; kart maxHeight'ı aşıldığında
+ * ipuçları scroll ile okunabilir, kart kesilmez ve karar butonları erişilebilir kalır.
+ * nestedScrollEnabled: PanResponder (yatay swipe) ile dikey scroll çakışmaz.
+ */
 export function CluesArea({ clues, clueIndex, fs }: CluesAreaProps) {
   const colors = useColors();
 
   if (clueIndex === 0) return null;
 
   return (
-    <View style={[styles.cluesArea, { borderTopColor: colors.border }]}>
-      {clues.slice(0, clueIndex).map((clue, i) => (
-        <View key={i} style={[styles.clue, { backgroundColor: colors.primary + "12" }]}>
-          <Feather name="info" size={12} color={colors.primary} />
-          <Text style={[styles.clueText, { color: colors.foreground, fontSize: fs(13) }]}>
-            {clue}
-          </Text>
-        </View>
-      ))}
+    <View style={[cardStyles.cluesArea, { borderTopColor: colors.border }]}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+        scrollEventThrottle={16}
+      >
+        {clues.slice(0, clueIndex).map((clue, i) => (
+          <View
+            key={i}
+            style={[
+              cardStyles.clue,
+              { backgroundColor: colors.primary + "12" },
+              i > 0 && styles.clueGap,
+            ]}
+          >
+            <Feather name="info" size={12} color={colors.primary} />
+            <Text
+              style={[
+                cardStyles.clueText,
+                { color: colors.foreground, fontSize: fs(13) },
+              ]}
+            >
+              {clue}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  /** 2-3 ipucu görünür, fazlası scroll ile okunur */
+  scroll: {
+    maxHeight: 132,
+  },
+  clueGap: {
+    marginTop: 8,
+  },
+});

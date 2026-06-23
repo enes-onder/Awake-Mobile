@@ -46,8 +46,16 @@ export function ActiveMissionView({
 }: ActiveMissionViewProps) {
   const colors = useColors();
   const r = useResponsive();
-  // useBottomChromeSpacing: tab bar (position:absolute) + safe area + dokunma dolgusu
+  /** Tab bar (position:absolute) + safe area + dokunma dolgusu */
   const safeBottom = useBottomChromeSpacing();
+
+  /**
+   * XPFloater'ı karar butonları ve bottom tab'ın üzerinde konumlandır.
+   * safeBottom: tab bar yüksekliğini ve safe area'yı kapsar.
+   * +74: verdict buton alanını (~52px buton + gap) aşacak kadar boşluk.
+   * Sonuç cihaz bağımsız — magic number veya cihaz modeli yok.
+   */
+  const xpFloaterBottom = safeBottom + 74;
 
   const feedbackColor = celebCorrect ? "#00C851" : "#FF3B30";
   const feedbackBg = celebCorrect ? "rgba(0,200,81,0.18)" : "rgba(255,59,48,0.18)";
@@ -184,10 +192,15 @@ export function ActiveMissionView({
         </Animated.View>
       </View>
 
+      {/**
+       * XPFloater: safeBottom + 74px — tab bar ve karar butonlarının üzerinde.
+       * Negatif amount (ipucu) kırmızı, pozitif (karar) amber renkte gösterilir.
+       */}
       <XPFloater
         visible={xpFloaterVisible}
         amount={xpFloaterAmount}
         onDone={onXPFloaterDone}
+        bottomOffset={xpFloaterBottom}
       />
     </View>
   );

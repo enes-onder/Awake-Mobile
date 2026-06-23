@@ -22,9 +22,9 @@ import type { Mission } from "@/data/missions";
 import type { Simulation } from "@/data/simulations";
 
 /** Karar geri bildirim banner'ının ekranda kaldığı süre (ms) */
-const VERDICT_FEEDBACK_MS = 800;
+const VERDICT_FEEDBACK_MS = 1050;
 /** Geri bildirim kapandıktan sonra result ekranına geçiş gecikmesi (ms) */
-const RESULT_TRANSITION_MS = 200;
+const RESULT_TRANSITION_MS = 220;
 
 /** Lab ekranındaki aktif sekme */
 export type LabTab = "vakalar" | "simulasyon";
@@ -212,13 +212,16 @@ export function useLabState(): UseLabStateReturn {
   };
 
   /**
-   * Bir ipucu açar ve 5 XP düşürür.
+   * Bir ipucu açar, 5 XP düşürür ve kullanıcıya görsel feedback verir.
    * Tüm ipuçları zaten açıksa hiçbir şey yapmaz.
    */
   const handleUseClue = () => {
     if (!activeMission || clueIndex >= activeMission.clues.length) return;
     setClueIndex((prev) => prev + 1);
     user.earnXP(-5);
+    /** Kullanıcıya -5 XP düşüşünü kırmızı floater ile göster */
+    setXpFloaterAmount(-5);
+    setXpFloaterVisible(true);
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }

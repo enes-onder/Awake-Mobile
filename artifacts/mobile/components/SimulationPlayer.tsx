@@ -18,6 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { SimChoice, Simulation } from "@/data/simulations";
+import { useBottomChromeSpacing } from "@/hooks/useBottomChromeSpacing";
 import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/hooks/useResponsive";
 
@@ -35,6 +36,8 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const r = useResponsive();
+  /** Tab bar (position:absolute) + safe area + dokunma dolgusu */
+  const bottomChromeSpacing = useBottomChromeSpacing();
   const topPadding = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
   const [stepIdx, setStepIdx] = useState(0);
@@ -92,7 +95,8 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
           { flex: 1, justifyContent: "center", backgroundColor: colors.background },
           {
             paddingTop: topPadding + 20,
-            paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 32,
+            /** useBottomChromeSpacing: tab bar yüksekliği + safe area + dolgu */
+            paddingBottom: bottomChromeSpacing,
             paddingHorizontal: r.hp,
           },
         ]}
@@ -231,7 +235,8 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
             borderTopWidth: 1,
             paddingTop: 12,
             paddingHorizontal: r.hp,
-            paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 16,
+            /** useBottomChromeSpacing: tab bar yüksekliği + safe area + dolgu */
+            paddingBottom: bottomChromeSpacing,
           }}
         >
           <TouchableOpacity
