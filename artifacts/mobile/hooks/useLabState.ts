@@ -253,15 +253,16 @@ export function useLabState(): UseLabStateReturn {
 
   /**
    * Simülasyon tamamlandığında XP kazandırır ve listeye döner.
-   * Aynı simülasyon bir oturumda iki kez tamamlanamaz.
+   * Aynı simülasyon bir oturumda iki kez tamamlanamaz —
+   * completedSims kontrolü earnXP'den ÖNCE yapılır, çifte ödül engellenir.
    */
   const handleSimComplete = (simId: string, xpEarned: number) => {
-    user.earnXP(xpEarned);
     if (!completedSims.includes(simId)) {
+      user.earnXP(xpEarned);
       setCompletedSims((prev) => [...prev, simId]);
+      setXpFloaterAmount(xpEarned);
+      setXpFloaterVisible(true);
     }
-    setXpFloaterAmount(xpEarned);
-    setXpFloaterVisible(true);
     setActiveSim(null);
   };
 

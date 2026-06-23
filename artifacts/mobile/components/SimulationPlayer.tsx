@@ -85,7 +85,9 @@ export function SimulationPlayer({ simulation, onComplete, onExit }: SimulationP
     if (!choice || selectedChoiceId) return;
     setSelectedChoiceId(choice.id);
     setShowResult(true);
-    setTotalXP((xp) => xp + choice.xpReward);
+    // Yanlış cevap XP kazandırmamalı; doğru cevap negatif XP veremez.
+    const choiceDelta = choice.isCorrect ? Math.max(0, choice.xpReward) : 0;
+    setTotalXP((xp) => xp + choiceDelta);
     if (Platform.OS !== "web") {
       if (choice.isCorrect) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
