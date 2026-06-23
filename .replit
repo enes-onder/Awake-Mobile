@@ -45,7 +45,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd artifacts/api-server && PORT=3001 node --enable-source-maps ./dist/index.mjs"
+args = "cd artifacts/api-server && PORT=3001 node ./build.mjs && PORT=3001 node --enable-source-maps ./dist/index.mjs"
 waitForPort = 3001
 
 [agent]
@@ -56,6 +56,10 @@ integrations = ["javascript_database:1.0.0"]
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
 
 [[ports]]
 localPort = 5000
