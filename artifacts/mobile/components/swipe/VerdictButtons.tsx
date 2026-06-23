@@ -2,8 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import ReAnimated from "react-native-reanimated";
-import type { AnimatedStyleProp } from "react-native-reanimated";
-import type { ViewStyle } from "react-native";
+import type { AnimatedStyle } from "react-native-reanimated";
+import type { TextStyle } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 import { styles } from "./swipeCardStyles";
@@ -14,7 +14,7 @@ interface VerdictButtonsProps {
   onUseClue: () => void;
   onVerdictFake: () => void;
   onVerdictReal: () => void;
-  xpPenaltyAnimStyle: AnimatedStyleProp<ViewStyle>;
+  xpPenaltyAnimStyle: AnimatedStyle<TextStyle>;
   sp: (base: number) => number;
 }
 

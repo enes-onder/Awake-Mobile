@@ -122,7 +122,7 @@ export function useLabState(): UseLabStateReturn {
    * Kullanıcının "Gerçek" veya "Sahte" kararını işler:
    * 1. Doğruluk kontrolü
    * 2. XP hesaplama (doğruysa reward × multiplier, yanlışsa -%40)
-   * 3. UserContext güncelleme
+   * 3. UserContext güncelleme — tek atomik completeMission çağrısı
    * 4. Kutlama animasyonunu tetikleme
    * 5. 2.3 saniye sonra result ekranına geçiş
    */
@@ -135,8 +135,10 @@ export function useLabState(): UseLabStateReturn {
       : -Math.floor(activeMission.xpReward * 0.4);
     const xpEarned = correct ? baseXP * multiplier : baseXP;
 
-    user.earnXP(xpEarned);
-    user.completeMission(activeMission.id, correct);
+    /** Sahte tespit: kullanıcı verdict==="fake" olan vakayı doğru tespit etti */
+    const wasFakeDetected = correct && activeMission.verdict === "fake";
+    /** XP ve tamamlanma tek atomik çağrıda — earnXP ayrıca çağrılmaz */
+    user.completeMission(activeMission.id, correct, xpEarned, wasFakeDetected);
     setLastCorrect(correct);
     setLastXP(xpEarned);
     setLastMultiplier(multiplier);

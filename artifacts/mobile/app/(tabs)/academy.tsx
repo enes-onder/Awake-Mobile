@@ -423,10 +423,11 @@ export default function AcademyScreen() {
   const badges = user.getBadges();
   const earnedCount = badges.filter((b) => b.earned).length;
 
-  /** Ders tamamlandığında XP kazandır, listelere geri dön */
+  /** Ders tamamlandığında XP dahil tek atomik completeLesson çağrısı yapar,
+   *  ardından XP animasyonunu tetikler ve liste görünümüne döner. */
   const handleCompleteLesson = (lessonId: string, xp: number) => {
-    user.completeLesson(lessonId);
-    user.earnXP(xp);
+    /** completeLesson(id, xpDelta) — tamamlanma ve XP tek atomik işlemde kaydedilir */
+    user.completeLesson(lessonId, xp);
     setXpFloaterAmount(xp);
     setXpFloaterVisible(true);
     setActiveLesson(null);

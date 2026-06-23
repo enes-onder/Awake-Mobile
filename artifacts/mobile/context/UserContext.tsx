@@ -119,8 +119,8 @@ interface UserContextType extends UserState {
   /** Uygulama açılışında kazanılan streak bonus XP miktarı (toast için) */
   streakBonusEarned: number;
   earnXP: (amount: number) => void;
-  completeMission: (missionId: string, correct: boolean) => void;
-  completeLesson: (lessonId: string) => void;
+  completeMission: (missionId: string, correct: boolean, xpDelta: number, wasFakeDetected?: boolean) => void;
+  completeLesson: (lessonId: string, xpDelta?: number) => void;
   earnBadge: (badgeId: string) => void;
   setUsername: (name: string) => void;
   updateProfile: (fields: { bio?: string; favoriteTopic?: string }) => void;
@@ -230,15 +230,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         } catch {}
       }
 
-      /** Bugün ilk girişse streak bonusunu ekle */
+      /** Bugün ilk girişse streak bonusu ver.
+       * Yalnızca xp ve lastLoginDate güncellenir.
+       * lastPlayDate ve streak gerçek oyun aktivitesinde değişir;
+       * burada değiştirilmesi dailyXPMultiplier'ı bozar. */
       const today = todayStr();
       if (loaded.username && loaded.lastLoginDate !== today) {
-        const { streak, lastPlayDate } = calcStreak(loaded.lastPlayDate, loaded.streak);
         loaded = {
           ...loaded,
           xp: loaded.xp + STREAK_BONUS_XP,
-          streak,
-          lastPlayDate,
           lastLoginDate: today,
         };
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(loaded)).catch(() => {});
@@ -268,7 +268,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * State'i günceller, AsyncStorage'a yazar ve opsiyonel olarak DB'ye senkronize eder.
-   * @param sync — false ise DB senkronizasyonu atlanır (sık güncellenen state için)
+   * Doğrudan next nesnesi verildiğinde kullanılır (setUsername, updateProfile vb.)
    */
   const save = useCallback(async (next: UserState, sync = true) => {
     setState(next);
@@ -277,6 +277,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     if (sync) syncToDB(next);
   }, [syncToDB]);
+
+  /**
+   * Fonksiyonel updater ile atomik state güncellemesi yapar.
+   * setState(prev => ...) kullandığı için stale closure riski yoktur.
+   * Ardışık çağrılarda önceki güncelleme ezilmez.
+   */
+  const saveUpdater = useCallback(
+    (updater: (prev: UserState) => UserState, sync = true) => {
+      setState(prev => {
+        const next = updater(prev);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+        if (sync) syncToDB(next);
+        return next;
+      });
+    },
+    [syncToDB]
+  );
 
   /** AsyncStorage'daki kullanıcı verisini siler ve state'i sıfırlar */
   const signOut = useCallback(async () => {
@@ -306,92 +323,112 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Eylemler ────────────────────────────────────────────────────────────
 
-  /** XP kazandırır veya düşürür; XP asla 0'ın altına düşmez */
+  /** XP kazandırır veya düşürür; XP asla 0'ın altına düşmez.
+   * saveUpdater kullanır — ipucu cezası veya anlık XP değişikliği için. */
   const earnXP = useCallback(
     (amount: number) => {
-      const next = { ...state, xp: Math.max(0, state.xp + amount) };
-      save(next);
+      saveUpdater(prev => ({ ...prev, xp: Math.max(0, prev.xp + amount) }));
     },
-    [state, save]
+    [saveUpdater]
   );
 
   /**
-   * Vaka tamamlandığında çağrılır:
-   * - İlk kez tamamlanıyorsa listeye ekler
-   * - Doğru/yanlış cevap istatistiklerini günceller
-   * - İlgili rozetleri kontrol eder ve ekler
-   * - Streaki günceller
+   * Vaka tamamlandığında çağrılır.
+   * xpDelta: net XP farkı (çarpan ve ipucu cezası dahil, useLabState tarafından hesaplanır)
+   * wasFakeDetected: kullanıcı verdict==="fake" olan vakayı doğru tespit ettiyse true
+   *
+   * Tüm güncellemeler (XP, tamamlanma, istatistik, rozet, streak) tek atomik
+   * saveUpdater çağrısında yapılır — stale closure riski yoktur.
    */
   const completeMission = useCallback(
-    (missionId: string, correct: boolean) => {
-      const alreadyDone = state.completedMissions.includes(missionId);
-      const newCompleted = alreadyDone
-        ? state.completedMissions
-        : [...state.completedMissions, missionId];
-      const newCorrect = correct ? state.correctAnswers + 1 : state.correctAnswers;
-      const newTotal = state.totalAnswers + 1;
-      const newFakes = correct && !alreadyDone
-        ? state.fakesDetected + 1
-        : state.fakesDetected;
-      const newBadges = [...state.badges];
+    (missionId: string, correct: boolean, xpDelta: number, wasFakeDetected?: boolean) => {
+      saveUpdater(prev => {
+        const alreadyDone = prev.completedMissions.includes(missionId);
+        const newCompleted = alreadyDone
+          ? prev.completedMissions
+          : [...prev.completedMissions, missionId];
+        const newCorrect = correct ? prev.correctAnswers + 1 : prev.correctAnswers;
+        const newTotal = prev.totalAnswers + 1;
 
-      /** İlk vaka rozeti */
-      if (!alreadyDone && newCompleted.length === 1 && !newBadges.includes("first_case")) {
-        newBadges.push("first_case");
-      }
-      /** 10 vaka rozeti */
-      if (!alreadyDone && newCompleted.length >= 10 && !newBadges.includes("lab_master")) {
-        newBadges.push("lab_master");
-      }
-      /** %90 doğruluk rozeti (minimum 5 cevap gerekir) */
-      if (accuracyRate >= 90 && newTotal >= 5 && !newBadges.includes("accuracy_90")) {
-        newBadges.push("accuracy_90");
-      }
-      /** 5 sahte tespit rozeti */
-      if (newFakes >= 5 && !newBadges.includes("truth_seeker")) {
-        newBadges.push("truth_seeker");
-      }
+        /** Sahte tespit sayacı yalnızca wasFakeDetected===true ise artar */
+        const newFakes =
+          wasFakeDetected && !alreadyDone
+            ? prev.fakesDetected + 1
+            : prev.fakesDetected;
 
-      const { streak, lastPlayDate } = calcStreak(state.lastPlayDate, state.streak);
-      if (streak >= 3 && !newBadges.includes("streak_3")) newBadges.push("streak_3");
-      if (streak >= 7 && !newBadges.includes("streak_7")) newBadges.push("streak_7");
+        /** XP atomik hesap — prev'den türetilir, stale state riski yoktur */
+        const newXP = Math.max(0, prev.xp + xpDelta);
+        const newRank = getRank(newXP);
+        const newAccuracy =
+          newTotal > 0 ? Math.round((newCorrect / newTotal) * 100) : 0;
 
-      /** Analist rütbesine ulaşıldıysa rozet ver */
-      if (rank.name === "Analist" && !newBadges.includes("analyst")) {
-        newBadges.push("analyst");
-      }
+        const newBadges = [...prev.badges];
 
-      save({
-        ...state,
-        completedMissions: newCompleted,
-        correctAnswers: newCorrect,
-        totalAnswers: newTotal,
-        fakesDetected: newFakes,
-        badges: newBadges,
-        streak,
-        lastPlayDate,
+        /** İlk vaka rozeti */
+        if (!alreadyDone && newCompleted.length === 1 && !newBadges.includes("first_case")) {
+          newBadges.push("first_case");
+        }
+        /** 10 vaka rozeti */
+        if (!alreadyDone && newCompleted.length >= 10 && !newBadges.includes("lab_master")) {
+          newBadges.push("lab_master");
+        }
+        /** %90 doğruluk rozeti — yeni hesaplanan değerlerle kontrol edilir */
+        if (newAccuracy >= 90 && newTotal >= 5 && !newBadges.includes("accuracy_90")) {
+          newBadges.push("accuracy_90");
+        }
+        /** 5 sahte tespit rozeti */
+        if (newFakes >= 5 && !newBadges.includes("truth_seeker")) {
+          newBadges.push("truth_seeker");
+        }
+
+        const { streak, lastPlayDate } = calcStreak(prev.lastPlayDate, prev.streak);
+        if (streak >= 3 && !newBadges.includes("streak_3")) newBadges.push("streak_3");
+        if (streak >= 7 && !newBadges.includes("streak_7")) newBadges.push("streak_7");
+
+        /** Analist rütbesi — yeni XP ile hesaplanan rütbe üzerinden kontrol edilir */
+        if (newRank.name === "Analist" && !newBadges.includes("analyst")) {
+          newBadges.push("analyst");
+        }
+
+        return {
+          ...prev,
+          xp: newXP,
+          completedMissions: newCompleted,
+          correctAnswers: newCorrect,
+          totalAnswers: newTotal,
+          fakesDetected: newFakes,
+          badges: newBadges,
+          streak,
+          lastPlayDate,
+        };
       });
     },
-    [state, save, accuracyRate, rank]
+    [saveUpdater]
   );
 
   /**
    * Ders tamamlandığında çağrılır.
-   * Zaten tamamlandıysa hiçbir şey yapmaz.
-   * 3 ders rozeti kontrolü yapar.
+   * xpDelta: temel ders ödülü + quiz bonusu toplamı (academy.tsx tarafından hesaplanır)
+   *
+   * Tamamlanma, XP, rozet ve streak tek atomik saveUpdater çağrısında kaydedilir.
+   * Zaten tamamlanmış ders için state değişmez.
    */
   const completeLesson = useCallback(
-    (lessonId: string) => {
-      if (state.completedLessons.includes(lessonId)) return;
-      const newLessons = [...state.completedLessons, lessonId];
-      const newBadges = [...state.badges];
-      if (newLessons.length >= 3 && !newBadges.includes("lesson_3")) {
-        newBadges.push("lesson_3");
-      }
-      const { streak, lastPlayDate } = calcStreak(state.lastPlayDate, state.streak);
-      save({ ...state, completedLessons: newLessons, badges: newBadges, streak, lastPlayDate });
+    (lessonId: string, xpDelta = 0) => {
+      saveUpdater(prev => {
+        /** Ders daha önce tamamlandıysa tekrar kayıt yapılmaz */
+        if (prev.completedLessons.includes(lessonId)) return prev;
+        const newLessons = [...prev.completedLessons, lessonId];
+        const newXP = Math.max(0, prev.xp + xpDelta);
+        const newBadges = [...prev.badges];
+        if (newLessons.length >= 3 && !newBadges.includes("lesson_3")) {
+          newBadges.push("lesson_3");
+        }
+        const { streak, lastPlayDate } = calcStreak(prev.lastPlayDate, prev.streak);
+        return { ...prev, xp: newXP, completedLessons: newLessons, badges: newBadges, streak, lastPlayDate };
+      });
     },
-    [state, save]
+    [saveUpdater]
   );
 
   /** Belirtilen rozeti kazanılmış olarak işaretler (zaten varsa tekrar eklemez) */
