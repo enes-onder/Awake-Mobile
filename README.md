@@ -12,8 +12,8 @@ Doğruluk Dedektifi; kullanıcıların sosyal medya paylaşımlarını analiz et
 - **Simülasyon** — Adım adım gerçek hayat senaryoları (WhatsApp mesajı, sahte alıntı, kriz anı)
 - **Akademi** — 6 ders + quiz'ler; sıralı kilit sistemi
 - **Profil** — XP sistemi, 5 rütbe kademesi, 8 rozet, günlük seri takibi
-- **Supabase Auth** — E-posta/şifre, magic link, anonim (misafir) giriş
-- **Offline Mod** — Supabase'e bağlanamazsan yerel yedek veri devreye girer
+- **Yerel Auth** — Kod adı tabanlı hızlı giriş; tüm ilerleme cihazda AsyncStorage'da saklanır
+- **Offline Mod** — API sunucusuna bağlanamazsan yerel yedek veri devreye girer
 - Karanlık tema, haptic geri bildirim, responsive tasarım (telefon + tablet)
 
 ---
@@ -59,7 +59,7 @@ dogruluk-dedektifi/
 │   │   ├── context/               ← UserContext (auth + oyun), ContentContext (içerik)
 │   │   ├── data/                  ← Offline yedek içerik (vakalar, dersler, simülasyonlar)
 │   │   ├── constants/             ← Renk paleti
-│   │   └── lib/                   ← Supabase istemcisi
+│   │   └── lib/                   ← API istemcisi
 │   │
 │   └── api-server/                ← Express.js REST API (altyapı hazır)
 │
@@ -108,24 +108,18 @@ cd dogruluk-dedektifi
 pnpm install
 ```
 
-### 3. Ortam Değişkenlerini Ayarla
+### 3. Veritabanını Kur (İlk Kez)
 
-`artifacts/mobile/` içinde `.env` dosyası oluştur:
+Replit Secrets panelinde `DATABASE_URL` tanımlanmış olmalıdır (Replit PostgreSQL otomatik sağlar).
 
-```env
-EXPO_PUBLIC_SUPABASE_URL=https://PROJE_ID.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhb...uzun_anahtar_buraya
+```bash
+pnpm --filter @workspace/db run push
+pnpm --filter @workspace/db run seed
 ```
-
-> Anahtarları [supabase.com](https://supabase.com) → Projen → **Settings → API** bölümünden alabilirsin.
-
-### 4. Supabase Veritabanını Kur (İlk Kez)
-
-Supabase dashboard → **SQL Editor** → `supabase/schema_and_seed.sql` dosyasını yapıştır → **Run**
 
 Detaylı bilgi için → [`docs/DATABASE.md`](docs/DATABASE.md)
 
-### 5. Uygulamayı Başlat
+### 4. Uygulamayı Başlat
 
 ```bash
 pnpm --filter @workspace/mobile run dev
@@ -210,12 +204,12 @@ iOS simülatörü için: Mac App Store'dan **Xcode**'u kur, bir kez aç, Expo ç
 
 ## 🔧 Ortam Değişkenleri
 
-| Dosya | Değişken | Açıklama |
+| Yer | Değişken | Açıklama |
 |---|---|---|
-| `artifacts/mobile/.env` | `EXPO_PUBLIC_SUPABASE_URL` | Supabase proje URL'i |
-| `artifacts/mobile/.env` | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonim anahtar |
-| `artifacts/api-server/.env` | `DATABASE_URL` | PostgreSQL bağlantı dizesi |
+| Replit Secrets | `DATABASE_URL` | PostgreSQL bağlantı dizesi (Replit otomatik tanımlar) |
 | `artifacts/api-server/.env` | `PORT` | API sunucu portu (varsayılan: 8080) |
+
+> `EXPO_PUBLIC_API_URL` tanımlanmazsa mobil uygulama yerel yedek içerikle çalışmaya devam eder.
 
 ---
 
@@ -230,7 +224,6 @@ iOS simülatörü için: Mac App Store'dan **Xcode**'u kur, bir kez aç, Expo ç
 | `react-native` 0.81.5 | Telefon/tablet UI katmanı |
 | `react-native-reanimated` ~4.1 | Akıcı animasyonlar |
 | `react-native-gesture-handler` ~2.28 | Swipe hareketleri |
-| `@supabase/supabase-js` | Auth + veritabanı bağlantısı |
 | `@react-native-async-storage/async-storage` | Cihaza yerel veri kaydetme |
 | `@expo/vector-icons` | Feather ikon seti |
 | `@expo-google-fonts/inter` | Inter yazı tipi |
@@ -250,9 +243,9 @@ iOS simülatörü için: Mac App Store'dan **Xcode**'u kur, bir kez aç, Expo ç
 
 ## 🗺️ Yol Haritası
 
-- [x] Supabase Auth — e-posta, magic link, anonim giriş
-- [ ] Google / Apple OAuth (Supabase'de provider yapılandırması gerekiyor)
-- [ ] Bulut tabanlı oyun verisi senkronizasyonu (AsyncStorage → Supabase)
+- [x] Yerel kod adı tabanlı hızlı giriş (AsyncStorage)
+- [ ] Google / Apple OAuth entegrasyonu
+- [ ] Bulut tabanlı oyun verisi senkronizasyonu (AsyncStorage → sunucu)
 - [ ] Günlük haber API entegrasyonu (teyit.org vb.)
 - [ ] Çok oyunculu sıralama tablosu
 - [ ] Push bildirim sistemi
@@ -271,14 +264,13 @@ iOS simülatörü için: Mac App Store'dan **Xcode**'u kur, bir kez aç, Expo ç
 - Telefon ve bilgisayar aynı Wi-Fi ağında olmalı
 - Expo Go'nun güncel olduğundan emin ol
 
-**Supabase bağlantısı çalışmıyor:**
-- `.env` dosyasının `artifacts/mobile/` içinde olduğunu kontrol et
-- Anahtarların başında/sonunda boşluk olmadığından emin ol
+**API sunucusuna bağlantı çalışmıyor:**
+- `DATABASE_URL` Replit Secrets'ta tanımlı olmalı
 - Bağlanamazsa uygulama yerel verilerle çalışmaya devam eder
 
 **Giriş ekranı çalışmıyor:**
-- Supabase projesinde "Anonymous sign-ins" etkin olmalı: Dashboard → Auth → Settings → Enable anonymous sign-ins
-- Detaylı auth sorun giderme → [`docs/AUTH.md`](docs/AUTH.md)
+- Kod adı girişi tamamen yerel çalışır; herhangi bir dış servis gerekmez
+- Detaylı auth akışı → [`docs/AUTH.md`](docs/AUTH.md)
 
 **`npm install` veya `yarn` hata veriyor:**
 - Bu proje sadece `pnpm` destekler: `pnpm install` kullan

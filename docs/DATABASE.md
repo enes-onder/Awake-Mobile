@@ -1,17 +1,29 @@
 # Veritabanı — Doğruluk Dedektifi
 
-Uygulama [Supabase](https://supabase.com) (PostgreSQL) kullanır. Şema ve başlangıç verileri `supabase/schema_and_seed.sql` dosyasındadır.
+Uygulama **Replit PostgreSQL** kullanır. Şema **Drizzle ORM** ile yönetilir (`lib/db/src/schema/index.ts`). Bağlantı `DATABASE_URL` ortam değişkeni üzerinden sağlanır; Replit bunu otomatik tanımlar.
 
 ---
 
 ## Kurulum
 
-**Supabase Dashboard'dan:**
-1. Sol menü → **SQL Editor** → New query
-2. `supabase/schema_and_seed.sql` dosyasının tüm içeriğini yapıştır
-3. **Run** butonuna bas
+```bash
+# Şemayı veritabanına uygula
+pnpm --filter @workspace/db run push
 
-> "already exists" hatası alırsan tablo zaten var demektir — bu normal, sorun değil.
+# Başlangıç verilerini yükle
+pnpm --filter @workspace/db run seed
+```
+
+> Replit ortamında `DATABASE_URL` Secrets panelinden otomatik gelir; elle tanımlamana gerek yoktur.
+
+---
+
+## Şema Konumu
+
+```
+lib/db/src/schema/index.ts   ← Tüm tablo tanımları (Drizzle)
+lib/db/src/index.ts          ← Drizzle bağlantısı (DATABASE_URL kullanır)
+```
 
 ---
 
@@ -33,7 +45,7 @@ Uygulama [Supabase](https://supabase.com) (PostgreSQL) kullanır. Şema ve başl
 | `required_xp` | int | Bu vakayı görmek için gereken min. XP |
 | `verdict` | text | `"real"` veya `"fake"` |
 | `content` | jsonb | Sosyal medya paylaşımı detayları |
-| `clues` | text[] | 3 ipucu metni |
+| `clues` | jsonb | 3 ipucu metni |
 | `explanation` | text | Doğru cevap açıklaması |
 
 #### `lessons` — Ders İçerikleri
@@ -46,8 +58,8 @@ Uygulama [Supabase](https://supabase.com) (PostgreSQL) kullanır. Şema ve başl
 | `icon`, `color` | text | Kart görünümü |
 | `xp_reward` | int | Temel XP ödülü |
 | `required_xp` | int | Kilit eşiği |
-| `content` | text[] | Ders paragrafları |
-| `quiz` | jsonb[] | Her biri: question, options[], correctIdx, explanation |
+| `content` | jsonb | Ders paragrafları |
+| `quiz` | jsonb | Her biri: question, options[], correctIdx, explanation |
 
 #### `simulations` — Senaryo Oyunları
 
@@ -59,63 +71,46 @@ Uygulama [Supabase](https://supabase.com) (PostgreSQL) kullanır. Şema ve başl
 | `xp_reward` | int | Tamamlama ödülü |
 | `category` | text | |
 | `required_xp` | int | Kilit eşiği |
-| `steps` | jsonb[] | `narrative` veya `choice` tipinde adımlar |
+| `steps` | jsonb | `narrative` veya `choice` tipinde adımlar |
 
 ---
 
-### Kullanıcı Tabloları (RLS Korumalı)
+### Kullanıcı Tabloları
 
 #### `profiles` — Kullanıcı Profilleri
 
 | Kolon | Tip | Açıklama |
 |---|---|---|
-| `id` | uuid PK | Supabase Auth kullanıcı ID'si (`auth.users` ile bağlı) |
-| `username` | text | Kod adı |
+| `id` | text PK | Kullanıcı adı (benzersiz kod adı) |
+| `username` | text | Görünen ad |
 | `bio` | text | Kısa tanıtım |
 | `favorite_topic` | text | Seçilen konu |
 | `xp` | int | Toplam XP |
-| `badges` | text[] | Kazanılmış rozet ID'leri |
+| `level` | int | Rütbe seviyesi (1–5) |
 | `streak` | int | Mevcut günlük seri |
 | `created_at` | timestamptz | Kayıt tarihi |
 
-> **Not:** Şu an profil verisi `AsyncStorage`'da (cihazda) saklanıyor. `profiles` tablosu ilerideki bulut senkronizasyonu için hazırlanmıştır.
-
-#### `user_mission_progress`
-
-| Kolon | Tip | Açıklama |
-|---|---|---|
-| `id` | uuid PK | |
-| `user_id` | uuid | `profiles.id` ile bağlı |
-| `mission_id` | text | `missions.id` ile bağlı |
-| `completed` | bool | Tamamlandı mı |
-| `correct` | bool | Doğru cevap verildi mi |
-| `completed_at` | timestamptz | |
-
-#### `user_lesson_progress` / `user_simulation_progress`
-
-Missions ile aynı yapıda, sırasıyla ders ve simülasyon ilerlemesi için.
+> **Not:** Profil verisi öncelikle `AsyncStorage`'da (cihazda) saklanır. `profiles` tablosu liderlik tablosu senkronizasyonu için kullanılır; API sunucusu `POST /api/profiles/upsert` ile güncellenir.
 
 ---
 
-## Row Level Security (RLS)
+## Offline Mod
 
-```sql
--- İçerik tabloları herkes okuyabilir
-CREATE POLICY "missions_public_read" ON missions
-  FOR SELECT USING (true);
+`ContentContext.tsx`, API sunucusuna bağlantı başarısız olursa veya boş veri dönerse otomatik olarak `data/` klasöründeki statik TypeScript dosyalarına geçer:
 
--- İlerleme tabloları: sadece kendi verisini gör/değiştir
-CREATE POLICY "own_progress" ON user_mission_progress
-  FOR ALL USING (auth.uid() = user_id);
+```
+artifacts/mobile/data/missions.ts     ← 8 vaka
+artifacts/mobile/data/lessons.ts      ← 6 ders
+artifacts/mobile/data/simulations.ts  ← 3 simülasyon
 ```
 
-Aynı politika `user_lesson_progress` ve `user_simulation_progress` için de uygulanır.
+Bu sayede internet bağlantısı olmasa da uygulama tam işlevsel çalışır.
 
 ---
 
 ## Başlangıç Verileri (Seed Data)
 
-`schema_and_seed.sql` içinde şu içerikler hazır gelir:
+`lib/db/` içindeki seed scripti çalıştırıldığında şu içerikler yüklenir:
 
 ### Vakalar (8 adet)
 
@@ -123,10 +118,10 @@ Aynı politika `user_lesson_progress` ve `user_simulation_progress` için de uyg
 |---|---|---|---|
 | m1 | Sel Felaketi Fotoğrafı | fake | 1 |
 | m2 | Bakan Açıklaması | fake | 2 |
-| m3 | Aşı Yan Etkileri | real | 2 |
-| m4 | Deprem Uyarısı | fake | 3 |
-| m5 | Çevre Raporu | real | 1 |
-| m6 | Müze Sergisi | real | 2 |
+| m3 | Aşı Yan Etkileri | fake | 2 |
+| m4 | Deprem Uyarısı | fake | 1 |
+| m5 | Çevre Raporu | fake | 3 |
+| m6 | Müze Sergisi | real | 1 |
 | m7 | YZ Fotoğrafı | fake | 3 |
 | m8 | Bilim İnsanı Alıntısı | fake | 2 |
 
@@ -134,12 +129,12 @@ Aynı politika `user_lesson_progress` ve `user_simulation_progress` için de uyg
 
 | ID | Başlık | Süre |
 |---|---|---|
-| l1 | Tersine Görsel Arama | 8 dk |
-| l2 | Metadata Analizi | 10 dk |
-| l3 | Kaynak Doğrulama | 12 dk |
-| l4 | Duygusal Manipülasyon | 9 dk |
-| l5 | YZ Görsel Tespiti | 11 dk |
-| l6 | Bağlam Çıkarma Tekniği | 10 dk |
+| l1 | Tersine Görsel Arama | 5 dk |
+| l2 | Metadata Analizi | 7 dk |
+| l3 | Kaynak Doğrulama | 6 dk |
+| l4 | Duygusal Manipülasyon | 8 dk |
+| l5 | YZ Görsel Tespiti | 6 dk |
+| l6 | Bağlam Çıkarma Tekniği | 5 dk |
 
 ### Simülasyonlar (3 adet)
 
@@ -151,26 +146,6 @@ Aynı politika `user_lesson_progress` ve `user_simulation_progress` için de uyg
 
 ---
 
-## Offline Mod
+## Supabase Notu
 
-`ContentContext.tsx`, Supabase bağlantısı başarısız olursa veya boş veri dönerse otomatik olarak `data/` klasöründeki statik TypeScript dosyalarına geçer:
-
-```
-data/missions.ts     ← 8 vaka
-data/lessons.ts      ← 6 ders
-data/simulations.ts  ← 3 simülasyon
-```
-
-Bu sayede internet bağlantısı olmasa da uygulama tam işlevli çalışır.
-
----
-
-## Supabase URL Yapılandırması
-
-`lib/supabase.ts` dosyasında:
-```typescript
-const SUPABASE_URL = "https://tojpdbexarwradtepwny.supabase.co";
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
-```
-
-URL kodda sabit yazılıdır. Anahtarı değiştirmek için Replit → Secrets → `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+`supabase/schema_and_seed.sql` dosyası eski bir tasarım artefaktıdır. Aktif mimari **Drizzle + Replit PostgreSQL**'dir. RLS (Row Level Security) ve `auth.users` gibi Supabase'e özgü özellikler aktif olarak kullanılmamaktadır.

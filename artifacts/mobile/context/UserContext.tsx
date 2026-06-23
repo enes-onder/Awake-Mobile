@@ -344,9 +344,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     (missionId: string, correct: boolean, xpDelta: number, wasFakeDetected?: boolean) => {
       saveUpdater(prev => {
         const alreadyDone = prev.completedMissions.includes(missionId);
-        const newCompleted = alreadyDone
-          ? prev.completedMissions
-          : [...prev.completedMissions, missionId];
+        /** Vaka yalnızca doğru cevap verildiğinde ve daha önce tamamlanmamışsa
+         * completedMissions'a eklenir. Yanlış cevapta vaka pending listede kalır
+         * ve tekrar denenebilir. */
+        const newCompleted =
+          correct && !alreadyDone
+            ? [...prev.completedMissions, missionId]
+            : prev.completedMissions;
         const newCorrect = correct ? prev.correctAnswers + 1 : prev.correctAnswers;
         const newTotal = prev.totalAnswers + 1;
 
