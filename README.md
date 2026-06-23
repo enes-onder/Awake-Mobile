@@ -66,7 +66,6 @@ dogruluk-dedektifi/
 │   └── api-server/                ← Express.js REST API (altyapı hazır)
 │
 ├── lib/                     ← Paylaşılan kütüphaneler (Drizzle, Zod, React Query)
-├── supabase/                ← schema_and_seed.sql
 ├── docs/                    ← Özellik belgelemeleri
 └── package.json
 ```
