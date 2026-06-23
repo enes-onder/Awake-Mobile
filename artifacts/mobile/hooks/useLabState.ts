@@ -21,10 +21,8 @@ import { useUser } from "@/context/UserContext";
 import type { Mission } from "@/data/missions";
 import type { Simulation } from "@/data/simulations";
 
-/** Karar geri bildirim banner'ının ekranda kaldığı süre (ms) */
-const VERDICT_FEEDBACK_MS = 1400;
-/** Geri bildirim kapandıktan sonra result ekranına geçiş gecikmesi (ms) */
-const RESULT_TRANSITION_MS = 260;
+/** Karar sonrası result ekranına geçiş gecikmesi (ms) — kısa tut, boş active ekranı önle */
+const RESULT_TRANSITION_MS = 120;
 
 /** Lab ekranındaki aktif sekme */
 export type LabTab = "vakalar" | "simulasyon";
@@ -168,8 +166,8 @@ export function useLabState(): UseLabStateReturn {
    * 1. Doğruluk kontrolü
    * 2. XP hesaplama (doğruysa reward × multiplier, yanlışsa -%40)
    * 3. UserContext güncelleme — tek atomik completeMission çağrısı
-   * 4. Kutlama animasyonunu tetikleme
-   * 5. VERDICT_FEEDBACK_MS + RESULT_TRANSITION_MS sonrası result ekranına geçiş
+   * 4. XP floater'ı tetikleme
+   * 5. RESULT_TRANSITION_MS sonrası result ekranına geçiş (boş active ekran yok)
    */
   const handleVerdict = (verdict: "real" | "fake") => {
     if (!activeMission) return;
@@ -188,7 +186,9 @@ export function useLabState(): UseLabStateReturn {
     setLastXP(xpEarned);
     setLastMultiplier(multiplier);
     setCelebCorrect(correct);
-    setCelebVisible(true);
+    // Banner active ekranda gösterilmiyor — result ekranı zaten "Doğru/Yanlış" gösteriyor.
+    // Boş kart alanı + banner combinasyonunu önlemek için celebVisible false kalır.
+    setCelebVisible(false);
     setXpFloaterAmount(xpEarned);
     setXpFloaterVisible(true);
 
@@ -201,14 +201,10 @@ export function useLabState(): UseLabStateReturn {
       );
     }
 
-    /** Kutlama feedback banner'ı bittikten sonra result ekranına geç.
-     * scheduleTimer kullanılır — erken çıkışta veya unmount'ta timer iptal edilir. */
+    /** Kısa gecikme sonrası result ekranına geç — boş active ekranını önler. */
     scheduleTimer(() => {
-      setCelebVisible(false);
-      scheduleTimer(() => {
-        setLabState("result");
-      }, RESULT_TRANSITION_MS);
-    }, VERDICT_FEEDBACK_MS);
+      setLabState("result");
+    }, RESULT_TRANSITION_MS);
   };
 
   /**

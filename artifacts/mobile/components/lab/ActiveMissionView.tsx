@@ -129,21 +129,22 @@ export function ActiveMissionView({
               Sol = Yanlış
             </Text>
           </Text>
-          {/* Vakanın ipucu cezası sonrası tahmini net ödülü */}
+          {/* Vakanın ipucu cezası sonrası tahmini net ödülü — anlaşılır etiketle */}
           {(() => {
             const gross = Math.round(activeMission.xpReward * user.dailyXPMultiplier);
             const net = Math.max(0, gross - clueIndex * 5);
+            const rewardColor = clueIndex > 0 ? colors.fake : colors.warning;
             return (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 3, marginLeft: 4 }}>
-                <Feather name="zap" size={11} color={clueIndex > 0 ? colors.fake : colors.warning} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 3, marginLeft: 4, flexShrink: 0 }}>
+                <Feather name="zap" size={11} color={rewardColor} />
                 <Text
                   style={{
                     fontFamily: "Inter_700Bold",
                     fontSize: 12,
-                    color: clueIndex > 0 ? colors.fake : colors.warning,
+                    color: rewardColor,
                   }}
                 >
-                  {net > 0 ? `+${net}` : `${net}`}
+                  {`Net ${net > 0 ? `+${net}` : net} XP`}
                 </Text>
               </View>
             );

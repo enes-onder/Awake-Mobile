@@ -67,7 +67,8 @@ export function useSwipeGesture({ width, onVerdictSelected }: UseSwipeGesturePro
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !verdictLockedRef.current,
+      // false: ilk dokunuşta gesture'ı alma — CluesArea ScrollView kendi touch'ını işleyebilsin
+      onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gs) => {
         if (verdictLockedRef.current) return false;
         const absDx = Math.abs(gs.dx);

@@ -208,8 +208,8 @@ export const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
   },
-  resultActions: { gap: 16, marginTop: 8 },
-  resultActionBar: { paddingTop: 18, borderTopWidth: 1 },
+  resultActions: { gap: 18, marginTop: 0 },
+  resultActionBar: { paddingTop: 20, borderTopWidth: 1 },
   nextBtn: {
     flexDirection: "row",
     alignItems: "center",

@@ -39,7 +39,7 @@ export function MissionResultView({
   const colors = useColors();
   const r = useResponsive();
   // useBottomChromeSpacing: tab bar (position:absolute) + safe area + dokunma dolgusu
-  const bottomChromeSpacing = useBottomChromeSpacing(28);
+  const bottomChromeSpacing = useBottomChromeSpacing(40);
 
   return (
     <View style={[styles.resultPage, { backgroundColor: colors.background }]}>
@@ -203,12 +203,14 @@ export function MissionResultView({
         ]}
       >
         <View
-          style={{
-            maxWidth: r.maxW,
-            alignSelf: "center",
-            width: "100%",
-            gap: 10,
-          }}
+          style={[
+            styles.resultActions,
+            {
+              maxWidth: r.maxW,
+              alignSelf: "center",
+              width: "100%",
+            },
+          ]}
         >
           {pendingMissionsCount > 1 && (
             <TouchableOpacity
