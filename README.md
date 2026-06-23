@@ -25,7 +25,7 @@ Doğruluk Dedektifi; kullanıcıların sosyal medya paylaşımlarını analiz et
 | Giriş yöntemleri, auth akışı, OAuth kurulumu | [`docs/AUTH.md`](docs/AUTH.md) |
 | Responsive tasarım, `useResponsive` hook | [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md) |
 | XP, rütbe, rozet, streak sistemi | [`docs/GAME_MECHANICS.md`](docs/GAME_MECHANICS.md) |
-| Supabase şeması, tablolar, RLS, seed data | [`docs/DATABASE.md`](docs/DATABASE.md) |
+| Drizzle/Replit PostgreSQL şeması, tablolar, seed data | [`docs/DATABASE.md`](docs/DATABASE.md) |
 | Her ekranın detaylı açıklaması | [`docs/SCREENS.md`](docs/SCREENS.md) |
 | Her bileşenin props ve davranış açıklaması | [`docs/COMPONENTS.md`](docs/COMPONENTS.md) |
 | UserContext ve ContentContext detayları | [`docs/CONTEXTS.md`](docs/CONTEXTS.md) |
@@ -51,7 +51,7 @@ dogruluk-dedektifi/
 │   │   │   └── *.tsx              ← Paylaşımlı bileşenler (SwipeCard, XPBar, MissionCard vb.)
 │   │   │
 │   │   ├── hooks/                 ← Custom hook'lar
-│   │   │   ├── useOnboardingAuth.ts ← Tüm auth state + Supabase işlemleri
+│   │   │   ├── useOnboardingAuth.ts ← Yerel kod adı auth state + onboarding akışı
 │   │   │   ├── useEditProfile.ts    ← Profil form state + kaydetme mantığı
 │   │   │   ├── useResponsive.ts     ← Responsive tasarım hesapları
 │   │   │   └── useColors.ts         ← Renk sistemi
